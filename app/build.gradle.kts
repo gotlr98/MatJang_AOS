@@ -1,21 +1,33 @@
+import java.io.FileInputStream
+import java.util.Properties
+import com.android.build.gradle.internal.cxx.configure.gradleLocalProperties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.jetbrains.kotlin.android)
+    id("com.google.android.libraries.mapsplatform.secrets-gradle-plugin")
 }
+
 
 android {
     namespace = "com.example.matjang_aos"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.example.matjang_aos"
-        minSdk = 24
+        minSdk = 34
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        buildConfigField("String", "NATIVE_APP_KEY", gradleLocalProperties(rootDir, providers).getProperty("NATIVE_APP_KEY"))
+        addManifestPlaceholders(mapOf("KAKAO_NATIVE_APP_KEY" to gradleLocalProperties(rootDir, providers).getProperty("KAKAO_NATIVE_APP_KEY")))
     }
+
+
+
 
     buildTypes {
         release {
@@ -45,5 +57,5 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
-    implementation("com.kakao.sdk:v2-user:2.12.1")
+    implementation("com.kakao.sdk:v2-all:2.20.0")
 }
