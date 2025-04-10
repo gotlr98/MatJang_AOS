@@ -58,4 +58,5 @@ dependencies {
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     implementation("com.kakao.sdk:v2-all:2.20.0")
+    implementation("com.kakao.maps.open:android:2.12.8")
 }

@@ -31,9 +31,6 @@ class SignInView : AppCompatActivity() {
         }
 
 
-
-
-
         val signInBtn = findViewById<ImageButton>(R.id.signInKakao) as ImageButton
         signInBtn.setOnClickListener{
             signInKakao()
