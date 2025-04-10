@@ -14,11 +14,11 @@ import com.kakao.sdk.user.UserApiClient
 import android.widget.Button
 import android.widget.ImageButton
 import android.content.Context
+import android.content.Intent
 import android.content.SharedPreferences
 
 class SignInView : AppCompatActivity() {
-    private var pref = context.getSharedPreferences(
-        "pref",Context.MODE_PRIVATE)
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -77,6 +77,13 @@ class SignInView : AppCompatActivity() {
                             else if (user != null) {
 
                                 val user = UserModel(email= user.kakaoAccount?.email, type= Type.Kakao)
+
+
+//                                var pref = this.getSharedPreferences(
+//                                    "pref",Context.MODE_PRIVATE)
+
+                                val intent = Intent(this, MainMap::class.java)
+                                startActivity(intent)
                             }
                         }
 
@@ -91,6 +98,9 @@ class SignInView : AppCompatActivity() {
                         }
                         else if (user != null) {
                             val user = UserModel(email= user.kakaoAccount?.email, type= Type.Kakao)
+
+                            val intent = Intent(this, MainMap::class.java)
+                            startActivity(intent)
                         }
                     }
 
@@ -98,6 +108,9 @@ class SignInView : AppCompatActivity() {
             }
         } else {
             UserApiClient.instance.loginWithKakaoAccount(this, callback = callback) // 카카오 이메일 로그인
+
+            val intent = Intent(this, MainMap::class.java)
+            startActivity(intent)
         }
 
     }
