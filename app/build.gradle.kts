@@ -26,6 +26,10 @@ android {
         addManifestPlaceholders(mapOf("KAKAO_NATIVE_APP_KEY" to gradleLocalProperties(rootDir, providers).getProperty("KAKAO_NATIVE_APP_KEY")))
     }
 
+    buildFeatures {
+        viewBinding = true
+    }
+
 
 
 

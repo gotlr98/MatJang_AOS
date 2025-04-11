@@ -9,8 +9,26 @@
 
     <com.kakao.vectormap.MapView
         android:id="@+id/map_view"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <!-- POI 정보를 표시할 TextView, 초기에는 보이지 않게 설정 -->
+    <TextView
+        android:id="@+id/poi_info_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="#80000000"
+        android:padding="8dp"
+        android:textColor="#FFFFFF"
+        android:visibility="gone"
+        app:layout_constraintBottom_toTopOf="parent"
+        app:layout_constraintEnd_toStartOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" /> <!-- 초기에는 숨김 -->
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>
