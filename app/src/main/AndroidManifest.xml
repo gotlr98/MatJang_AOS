@@ -4,6 +4,14 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
 
+    <meta-data
+        android:name="com.kakao.sdk.AppKey"
+        android:value="${NATIVE_APP_KEY}" />
+
+    <meta-data
+        android:name="com.kakao.vectormap.APP_KEY"
+        android:value="${NATIVE_APP_KEY}"/>
+
     <application
         android:name=".GlobalApplication"
         android:allowBackup="true"

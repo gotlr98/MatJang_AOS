@@ -18,60 +18,58 @@ import com.kakao.vectormap.MapView
 
 class MainMap : AppCompatActivity() {
 
-    private var map : com.kakao.vectormap.MapView? = null
-    private var kakaoMapValue : KakaoMap? = null
-//    private var _binding: ResultProfileBinding? = null
-//    // This property is only valid between onCreateView and
-//// onDestroyView.
-//    private val binding get() = _binding!!
+
+    private lateinit var mapView: MapView
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
+        setContentView(R.layout.activity_main_map) // ← 너의 레이아웃 이름으로 변경
 
         KakaoMapSdk.init(this, BuildConfig.NATIVE_APP_KEY)
-        Log.d("TestActivity", "지도 세팅")
-        map = findViewById(R.id.map_view) // 맵뷰
-        //binding.mapMvMapcontainer.addView(map)
-        map?.start(object : MapLifeCycleCallback() {
-            override fun onMapDestroy() { //맵뷰가 정상적으로 종료 시 사용됨
-                Log.e("TestActivity", "onMapDestroy")
+
+        mapView = findViewById(R.id.map_view)
+
+        // MapLifeCycleCallback 객체 생성
+        val lifeCycleCallback = object : MapLifeCycleCallback() {
+            override fun onMapDestroy() {
+                // 지도 API가 정상적으로 종료될 때 호출
+                Log.d("KakaoMap", "Map destroyed")
             }
 
-            override fun onMapError(error: Exception?) {
-                Log.e("TestActivity", "onMApError", error)
-
+            override fun onMapError(error: Exception) {
+                // 지도 API 에러 발생 시 호출
+                Log.e("KakaoMap", "Map error: ${error.message}")
             }
+        }
 
-        }, object : KakaoMapReadyCallback() {
-            //position과 zoom부분은 필수 작성 x
-
-            // 인증 후 API 가 정상적으로 실행될 때 호출됨
-            override fun getPosition(): LatLng {
-                //startPosition = super.getPosition()
-                return super.getPosition()
-                //지도가 시작할 때 처음의 시작 위치를 설정한다.
-            }
-
-            override fun getZoomLevel(): Int {
-                //줌 레벨 설정
-                return 17
-            }
-
+        // KakaoMapReadyCallback 객체 생성
+        val readyCallback = object : KakaoMapReadyCallback() {
             override fun onMapReady(kakaoMap: KakaoMap) {
-                Log.e("TestActivity", "onMapReady")
-                kakaoMapValue = kakaoMap
-                // 지도 클릭 리스너 설정
-                kakaoMapValue!!.setOnMapClickListener { kakaoMap, latLng, pointF, poi -> //pointF => 현재 핸드폰 화면 상의 좌표값, poi는 지도상의 좌표값, 라벨 이름 등의 정보
-                    // POI 정보창 표시
-//                    showInfoWindow(poi, pointF)
-//                    location = poi.name
-//                    latLngString = "${latLng.latitude}"+" "+"${latLng.longitude}"
-                }
-
+                // 지도 준비 완료 시 호출
+                Log.d("KakaoMap", "Map is ready!")
+                // 여기에 kakaoMap 조작 코드 작성 가능
             }
-        })
+        }
 
+        // 지도 시작
+        mapView.start(lifeCycleCallback, readyCallback)
     }
+
+    override fun onResume() {
+        super.onResume()
+        mapView.resume() // 지도 resume
+    }
+
+    override fun onPause() {
+        super.onPause()
+        mapView.pause() // 지도 pause
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        mapView.pause() // 지도 종료
+    }
+
 
 
 

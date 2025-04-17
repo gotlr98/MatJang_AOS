@@ -16,9 +16,12 @@ import android.widget.ImageButton
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
+import com.google.firebase.firestore.ktx.firestore
+import com.google.firebase.ktx.Firebase
 
 class SignInView : AppCompatActivity() {
 
+    val db = Firebase.firestore
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

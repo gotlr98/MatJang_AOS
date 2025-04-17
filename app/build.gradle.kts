@@ -1,12 +1,17 @@
 import java.io.FileInputStream
 import java.util.Properties
 import com.android.build.gradle.internal.cxx.configure.gradleLocalProperties
+import java.lang.System.getProperty
 
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.jetbrains.kotlin.android)
     id("com.google.android.libraries.mapsplatform.secrets-gradle-plugin")
+    id("com.google.gms.google-services")
 }
+
+val properties = Properties()
+properties.load(project.rootProject.file("local.properties").inputStream())
 
 
 android {
@@ -22,9 +27,12 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
-        buildConfigField("String", "NATIVE_APP_KEY", gradleLocalProperties(rootDir, providers).getProperty("NATIVE_APP_KEY"))
-        addManifestPlaceholders(mapOf("KAKAO_NATIVE_APP_KEY" to gradleLocalProperties(rootDir, providers).getProperty("KAKAO_NATIVE_APP_KEY")))
+        manifestPlaceholders["NATIVE_APP_KEY"] = project.properties["NATIVE_APP_KEY"].toString()
+        manifestPlaceholders["KAKAO_NATIVE_APP_KEY"] = project.properties["KAKAO_NATIVE_APP_KEY"].toString()
+
     }
+
+
 
     buildFeatures {
         viewBinding = true
@@ -58,9 +66,12 @@ dependencies {
     implementation(libs.material)
     implementation(libs.androidx.activity)
     implementation(libs.androidx.constraintlayout)
+    implementation(libs.firebase.firestore.ktx)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     implementation("com.kakao.sdk:v2-all:2.20.0")
     implementation("com.kakao.maps.open:android:2.12.8")
+    implementation(platform("com.google.firebase:firebase-bom:33.12.0"))
+    implementation("com.google.firebase:firebase-analytics")
 }
