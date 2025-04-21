@@ -5,9 +5,10 @@ import java.lang.System.getProperty
 
 plugins {
     alias(libs.plugins.android.application)
-    alias(libs.plugins.jetbrains.kotlin.android)
+    alias(libs.plugins.jetbrains.kotlin.android) version "2.1.0"
     id("com.google.android.libraries.mapsplatform.secrets-gradle-plugin")
     id("com.google.gms.google-services")
+    id ("kotlin-parcelize")
 }
 
 val properties = Properties()

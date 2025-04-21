@@ -1,20 +1,18 @@
 package com.example.matjang_aos
 
+import android.os.Parcelable
 import androidx.lifecycle.ViewModel
+import kotlinx.android.parcel.Parcelize
 
 enum class Type {
     Kakao, Guest
 }
 
-class UserModel{
+@Parcelize
+data class UserModel(
 
-    constructor(email: String?, type: Type){
-        this.email = email
-        this.type = type
-    }
-    val email: String?
+    val email: String?,
     val type: Type
 
 
-
-}
+) : Parcelable

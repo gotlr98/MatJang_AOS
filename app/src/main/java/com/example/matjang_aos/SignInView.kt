@@ -16,6 +16,7 @@ import android.widget.ImageButton
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
+import android.nfc.Tag
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 
@@ -36,9 +37,9 @@ class SignInView : AppCompatActivity() {
 
         val signInBtn = findViewById<ImageButton>(R.id.signInKakao) as ImageButton
         signInBtn.setOnClickListener{
+            Log.d(TAG, "button click")
             signInKakao()
         }
-
     }
 
     fun signInKakao() {
@@ -73,16 +74,18 @@ class SignInView : AppCompatActivity() {
                         UserApiClient.instance.me { user, error ->
                             if (error != null) {
                                 Log.e(TAG, "사용자 정보 요청 실패", error)
-                            }
-                            else if (user != null) {
+                            } else if (user != null) {
 
-                                val user = UserModel(email= user.kakaoAccount?.email, type= Type.Kakao)
+                                val user_default =
+                                    UserModel(email = user.kakaoAccount?.email, type = Type.Kakao)
 
 
-//                                var pref = this.getSharedPreferences(
-//                                    "pref",Context.MODE_PRIVATE)
+                                db.collection("users").document(
+                                    "${user.kakaoAccount?.email}&Kakao"
+                                ).set({})
 
                                 val intent = Intent(this, MainMap::class.java)
+                                intent.putExtra("user", user_default)
                                 startActivity(intent)
                             }
                         }
@@ -95,22 +98,46 @@ class SignInView : AppCompatActivity() {
                     UserApiClient.instance.me { user, error ->
                         if (error != null) {
                             Log.e(TAG, "사용자 정보 요청 실패", error)
-                        }
-                        else if (user != null) {
-                            val user = UserModel(email= user.kakaoAccount?.email, type= Type.Kakao)
+                        } else if (user != null) {
+                            val user_default =
+                                UserModel(email = user.kakaoAccount?.email, type = Type.Kakao)
+
+
+                            db.collection("users").document(
+                                "${user.kakaoAccount?.email}&Kakao"
+                            ).set({})
 
                             val intent = Intent(this, MainMap::class.java)
+                            intent.putExtra("user", user_default)
                             startActivity(intent)
                         }
                     }
 
                 }
             }
-        } else {
+        }
+        else{
             UserApiClient.instance.loginWithKakaoAccount(this, callback = callback) // 카카오 이메일 로그인
 
-            val intent = Intent(this, MainMap::class.java)
-            startActivity(intent)
+            UserApiClient.instance.me { user, error ->
+                if (error != null) {
+                    Log.e(TAG, "사용자 정보 요청 실패", error)
+                }
+                else if (user != null) {
+
+                    val user_default = UserModel(email= user.kakaoAccount?.email, type= Type.Kakao)
+
+
+                    db.collection("users").document(
+                        "${user.kakaoAccount?.email}&Kakao"
+                    ).set({})
+
+                            val intent = Intent(this, MainMap::class.java)
+                    intent.putExtra("user", user_default)
+                            startActivity(intent)
+                        }
+            }
+
         }
 
     }
