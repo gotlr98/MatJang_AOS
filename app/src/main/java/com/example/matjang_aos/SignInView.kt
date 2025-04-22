@@ -23,9 +23,31 @@ import com.google.firebase.ktx.Firebase
 class SignInView : AppCompatActivity() {
 
     val db = Firebase.firestore
+    val pref = getSharedPreferences("signIn", Context.MODE_PRIVATE)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        val token = pref.getString("token", null)
+
+        if (token != null) {
+            // 이미 로그인된 상태 -> 사용자 정보 요청
+            UserApiClient.instance.me { user, error ->
+                if (error != null) {
+                    Log.e(TAG, "자동 로그인 실패", error)
+                } else if (user != null) {
+                    val user_default = UserModel(
+                        email = user.kakaoAccount?.email,
+                        type = Type.Kakao
+                    )
+
+                    val intent = Intent(this, MainMap::class.java)
+                    intent.putExtra("user", user_default)
+                    startActivity(intent)
+                    finish() // 현재 로그인 화면 종료
+                }
+            }
+        }
         enableEdgeToEdge()
         setContentView(R.layout.activity_sign_in_view)
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
@@ -85,7 +107,8 @@ class SignInView : AppCompatActivity() {
                                 ).set({})
 
                                 val intent = Intent(this, MainMap::class.java)
-                                intent.putExtra("user", user_default)
+                                pref.edit().putString("token", token?.accessToken).apply()
+                                pref.edit().putString("email", user.kakaoAccount?.email).apply()
                                 startActivity(intent)
                             }
                         }
@@ -108,7 +131,8 @@ class SignInView : AppCompatActivity() {
                             ).set({})
 
                             val intent = Intent(this, MainMap::class.java)
-                            intent.putExtra("user", user_default)
+                            pref.edit().putString("token", token?.accessToken).apply()
+                            pref.edit().putString("email", user.kakaoAccount?.email).apply()
                             startActivity(intent)
                         }
                     }
@@ -116,29 +140,42 @@ class SignInView : AppCompatActivity() {
                 }
             }
         }
-        else{
-            UserApiClient.instance.loginWithKakaoAccount(this, callback = callback) // 카카오 이메일 로그인
-
-            UserApiClient.instance.me { user, error ->
+        else {
+            UserApiClient.instance.loginWithKakaoAccount(this) { token, error ->
                 if (error != null) {
-                    Log.e(TAG, "사용자 정보 요청 실패", error)
-                }
-                else if (user != null) {
+                    Log.e(TAG, "카카오계정으로 로그인 실패", error)
+                } else if (token != null) {
+                    Log.i(TAG, "카카오계정으로 로그인 성공 ${token.accessToken}")
 
-                    val user_default = UserModel(email= user.kakaoAccount?.email, type= Type.Kakao)
+                    // SharedPreferences에 토큰 저장
+                    val pref = getSharedPreferences("MyPrefs", Context.MODE_PRIVATE)
+                    pref.edit().putString("token", token.accessToken).apply()
 
+                    // 사용자 정보 요청
+                    UserApiClient.instance.me { user, error ->
+                        if (error != null) {
+                            Log.e(TAG, "사용자 정보 요청 실패", error)
+                        } else if (user != null) {
+                            val user_default = UserModel(
+                                email = user.kakaoAccount?.email,
+                                type = Type.Kakao
+                            )
 
-                    db.collection("users").document(
-                        "${user.kakaoAccount?.email}&Kakao"
-                    ).set({})
+                            pref.edit().putString("email", user.kakaoAccount?.email).apply()
+
+                            db.collection("users").document(
+                                "${user.kakaoAccount?.email}&Kakao"
+                            ).set({})
 
                             val intent = Intent(this, MainMap::class.java)
-                    intent.putExtra("user", user_default)
+                            intent.putExtra("user", user_default)
                             startActivity(intent)
                         }
+                    }
+                }
             }
-
         }
+
 
     }
 }
