@@ -16,17 +16,24 @@ import android.widget.ImageButton
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
+import android.content.pm.PackageManager
 import android.nfc.Tag
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 
 class SignInView : AppCompatActivity() {
 
     val db = Firebase.firestore
-    val pref = getSharedPreferences("signIn", Context.MODE_PRIVATE)
-
+    val pref by lazy { getSharedPreferences("signIn", Context.MODE_PRIVATE) }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+//        if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+//            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE), 1)
+//        }
+
 
         val token = pref.getString("token", null)
 
@@ -148,7 +155,6 @@ class SignInView : AppCompatActivity() {
                     Log.i(TAG, "카카오계정으로 로그인 성공 ${token.accessToken}")
 
                     // SharedPreferences에 토큰 저장
-                    val pref = getSharedPreferences("MyPrefs", Context.MODE_PRIVATE)
                     pref.edit().putString("token", token.accessToken).apply()
 
                     // 사용자 정보 요청
@@ -168,7 +174,8 @@ class SignInView : AppCompatActivity() {
                             ).set({})
 
                             val intent = Intent(this, MainMap::class.java)
-                            intent.putExtra("user", user_default)
+                            pref.edit().putString("token", token.accessToken).apply()
+                            pref.edit().putString("email", user.kakaoAccount?.email).apply()
                             startActivity(intent)
                         }
                     }
