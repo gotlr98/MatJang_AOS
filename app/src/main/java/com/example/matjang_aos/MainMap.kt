@@ -34,7 +34,6 @@ class MainMap : AppCompatActivity() {
         setContentView(R.layout.activity_main_map) //
 
 
-
         drawerLayout = findViewById(R.id.drawer_layout)
         navigationView = findViewById(R.id.navigation_view)
 
