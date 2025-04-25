@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="horizontal"
+    android:layout_width="match_parent"
+    android:layout_height="160dp"
+    android:background="@color/purple_500"
+    android:gravity="center_vertical"
+    android:padding="16dp">
+
+    <!-- 동그란 사람 아이콘 -->
+    <ImageView
+        android:id="@+id/profile_icon"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_marginEnd="12dp"
+        android:src="@drawable/ic_person"
+        android:background="@drawable/circle_background"
+        android:padding="8dp" />
+
+    <!-- 이메일 텍스트 -->
+    <TextView
+        android:id="@+id/email_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="이메일"
+        android:textColor="@android:color/white"
+        android:textSize="16sp" />
+</LinearLayout>

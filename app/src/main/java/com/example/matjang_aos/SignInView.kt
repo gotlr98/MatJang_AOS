@@ -153,7 +153,6 @@ class SignInView : AppCompatActivity() {
             }
         }
         else {
-            Log.e(TAG, "여기입니다")
             UserApiClient.instance.loginWithKakaoAccount(this) { token, error ->
                 if (error != null) {
                     Log.e(TAG, "카카오계정으로 로그인 실패", error)
