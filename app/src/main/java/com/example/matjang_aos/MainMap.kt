@@ -141,6 +141,8 @@ class MainMap : AppCompatActivity() {
 
 
                     Log.d("camera stop", position.toString())
+                    Log.d("cur Camera Position", "latitude: ${position.position.latitude} " +
+                            "longitude${position.position.longitude}")
 
                     val curLatLng = LatLng.from(position.position.latitude, position.position.longitude)
 
@@ -186,7 +188,7 @@ class MainMap : AppCompatActivity() {
         val apiKey = "KakaoAK ${BuildConfig.KAKAO_REST_API_KEY}"  // 카카오 REST API 키 (실제 키로 대체하세요)
         val categoryCode = "FD6"  // 음식점 카테고리 코드
         val longitude = latlng.longitude  // 경도 (예시: 서울)
-        val latitude = latlng.longitude   // 위도 (예시: 서울)
+        val latitude = latlng.latitude   // 위도 (예시: 서울)
         val radius = 1000        // 검색 반경 1km
 
         apiService.searchByCategory(apiKey, categoryCode, longitude, latitude, radius)
