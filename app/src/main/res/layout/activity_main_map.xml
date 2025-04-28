@@ -58,12 +58,12 @@
         app:headerLayout="@layout/nav_header"
         app:menu="@menu/drawer_menu" />
 
-    <Button
-        android:id="@+id/btn_place_marker"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="여기 등록"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:layout_margin="16dp" />
+<!--    <Button-->
+<!--        android:id="@+id/btn_place_marker"-->
+<!--        android:layout_width="wrap_content"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        android:text="여기 등록"-->
+<!--        app:layout_constraintBottom_toBottomOf="parent"-->
+<!--        app:layout_constraintEnd_toEndOf="parent"-->
+<!--        android:layout_margin="16dp" />-->
 </androidx.drawerlayout.widget.DrawerLayout>

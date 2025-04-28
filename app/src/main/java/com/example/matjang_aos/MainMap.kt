@@ -27,7 +27,11 @@ import com.kakao.vectormap.label.Label
 import com.kakao.vectormap.label.LabelLayerOptions
 import com.kakao.vectormap.label.LabelManager
 import com.kakao.vectormap.label.LabelOptions
+import com.kakao.vectormap.label.LabelStyle
+import com.kakao.vectormap.label.LabelStyles
 import com.kakao.vectormap.label.LabelTextBuilder
+import com.kakao.vectormap.label.LabelTextStyle
+import java.util.Locale
 
 
 class MainMap : AppCompatActivity() {
@@ -38,8 +42,6 @@ class MainMap : AppCompatActivity() {
     private lateinit var drawerLayout: DrawerLayout
     private lateinit var navigationView: NavigationView
 
-    private var labelManager: LabelManager? = null
-    private var marker: Label? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -92,7 +94,7 @@ class MainMap : AppCompatActivity() {
             }
         }
 
-        val btnPlaceMarker = findViewById<Button>(R.id.btn_place_marker)
+//        val btnPlaceMarker = findViewById<Button>(R.id.btn_place_marker)
 
         // KakaoMapReadyCallback 객체 생성
         val readyCallback = object : KakaoMapReadyCallback() {
@@ -100,15 +102,26 @@ class MainMap : AppCompatActivity() {
                 // 지도 준비 완료 시 호출
                 Log.d("KakaoMap", "Map is ready!")
 
+                val labelManager = map.labelManager
 
-                labelManager = mapView.labelManager
+                map.setOnCameraMoveEndListener { kakaoMap, position, gestureType ->
+                    // position 파라미터를 이용해서 원하는 작업을 수행
 
-                // 카메라 이동이 끝났을 때 이벤트
+                    Log.d("camera stop", position.toString())
 
-                map.setOnCameraMoveEndListener { map, cameraPosition, gestureType ->
-                    val center = cameraPosition.position
-                    placeMarker(center)
+                    val curLatLng = LatLng.from(position.position.latitude, position.position.longitude)
+
+
+                    val styles = labelManager
+                        ?.addLabelStyles(LabelStyles.from(LabelStyle.from(R.drawable.marker)))
+
+                    val options = LabelOptions.from(LatLng.from(curLatLng))
+                        .setStyles(styles)
+
+                    val layer = labelManager?.getLayer()
+                    val label = layer?.addLabel(options);
                 }
+
             }
         }
 
@@ -116,20 +129,7 @@ class MainMap : AppCompatActivity() {
         mapView.start(lifeCycleCallback, readyCallback)
     }
 
-    private fun placeMarker(position: LatLng) {
-        labelManager?.clear() // 기존 마커 제거
 
-        val markerOptions = LabelOptions.from(position)
-            .setTexts(LabelText.builder("여기예요").build())
-            .setTag("centerMarker")
-
-        marker = labelManager?.addLabel(markerOptions)
-
-        marker?.setOnLabelClickListener { _, _ ->
-            Toast.makeText(this, "위도: ${position.latitude}, 경도: ${position.longitude}", Toast.LENGTH_SHORT).show()
-            true
-        }
-    }
 
 
     override fun onResume() {
