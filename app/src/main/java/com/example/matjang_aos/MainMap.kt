@@ -139,24 +139,32 @@ class MainMap : AppCompatActivity() {
                     // position 파라미터를 이용해서 원하는 작업을 수행
 
 
-
-                    Log.d("camera stop", position.toString())
-                    Log.d("cur Camera Position", "latitude: ${position.position.latitude} " +
-                            "longitude${position.position.longitude}")
-
                     val curLatLng = LatLng.from(position.position.latitude, position.position.longitude)
 
 
-                    val styles = labelManager
-                        ?.addLabelStyles(LabelStyles.from(LabelStyle.from(R.drawable.marker)))
+//                    val styles = labelManager
+//                        ?.addLabelStyles(LabelStyles.from(LabelStyle.from(R.drawable.marker)))
+//
+//                    val options = LabelOptions.from(LatLng.from(curLatLng))
+//                        .setStyles(styles)
+//
+//
+//                    val label = layer?.addLabel(options);
 
-                    val options = LabelOptions.from(LatLng.from(curLatLng))
-                        .setStyles(styles)
+                    val labelStyles = LabelStyles.from(LabelStyle.from(R.drawable.marker))
+                    val options = mutableListOf<LabelOptions>()
+
+                    val layer_ = kakaoMap.labelManager?.getLodLayer()
 
 
-                    val label = layer?.addLabel(options);
+                    searchPlacesByCategory(curLatLng) { places ->
+                        places?.forEach {place ->
+                            val tempLatLng = LatLng.from(place.latitude, place.longitude)
+                            options.add(LabelOptions.from(tempLatLng).setStyles(labelStyles))
+                        }
+                    }
 
-                    searchPlacesByCategory(curLatLng)
+                    val label = layer?.addLabels(options)
                 }
 
             }
@@ -184,12 +192,12 @@ class MainMap : AppCompatActivity() {
         mapView.pause() // 지도 종료
     }
 
-    fun searchPlacesByCategory(latlng: LatLng) {
-        val apiKey = "KakaoAK ${BuildConfig.KAKAO_REST_API_KEY}"  // 카카오 REST API 키 (실제 키로 대체하세요)
-        val categoryCode = "FD6"  // 음식점 카테고리 코드
-        val longitude = latlng.longitude  // 경도 (예시: 서울)
-        val latitude = latlng.latitude   // 위도 (예시: 서울)
-        val radius = 1000        // 검색 반경 1km
+    fun searchPlacesByCategory(latlng: LatLng, onResult: (List<Matjip>?) -> Unit) {
+        val apiKey = "KakaoAK ${BuildConfig.KAKAO_REST_API_KEY}"
+        val categoryCode = "FD6"
+        val longitude = latlng.longitude
+        val latitude = latlng.latitude
+        val radius = 1000
 
         apiService.searchByCategory(apiKey, categoryCode, longitude, latitude, radius)
             .enqueue(object : Callback<CategorySearchResponse> {
@@ -199,23 +207,20 @@ class MainMap : AppCompatActivity() {
                 ) {
                     if (response.isSuccessful) {
                         val places = response.body()?.documents
-                        places?.forEach {
-                            println("Place Name: ${it.place_name}")
-                            println("Category: ${it.category_name}")
-                            println("Address: ${it.address_name}")
-                            println("Phone: ${it.phone}")
-                            println("Latitude: ${it.latitude}, Longitude: ${it.longitude}")
-                        }
+                        onResult(places)  // 결과를 콜백으로 넘김
                     } else {
                         println("Request failed with code: ${response.code()}")
+                        onResult(null)  // 실패했으면 null
                     }
                 }
 
                 override fun onFailure(call: Call<CategorySearchResponse>, t: Throwable) {
                     println("Error: ${t.message}")
+                    onResult(null)
                 }
             })
     }
+
 
 
 
