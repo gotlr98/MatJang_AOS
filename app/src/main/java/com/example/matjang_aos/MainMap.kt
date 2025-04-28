@@ -33,6 +33,28 @@ import com.kakao.vectormap.label.LabelTextBuilder
 import com.kakao.vectormap.label.LabelTextStyle
 import java.util.Locale
 
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
+import retrofit2.http.GET
+import retrofit2.http.Header
+import retrofit2.http.Query
+
+interface KakaoApiService {
+
+    // 카테고리로 장소 검색
+    @GET("v2/local/search/category.json")
+    fun searchByCategory(
+        @Header("Authorization") apiKey: String,  // REST API 키를 헤더에 포함
+        @Query("category_group_code") category: String,  // 카테고리 코드
+        @Query("x") longitude: Double,  // 경도
+        @Query("y") latitude: Double,   // 위도
+        @Query("radius") radius: Int    // 검색 반경 (미터)
+    ): Call<CategorySearchResponse>
+}
+
 
 class MainMap : AppCompatActivity() {
 
@@ -41,6 +63,13 @@ class MainMap : AppCompatActivity() {
 
     private lateinit var drawerLayout: DrawerLayout
     private lateinit var navigationView: NavigationView
+
+    val retrofit = Retrofit.Builder()
+        .baseUrl("https://dapi.kakao.com/")  // 카카오 API의 베이스 URL
+        .addConverterFactory(GsonConverterFactory.create())  // Gson을 이용해 JSON을 객체로 변환
+        .build()
+
+    val apiService = retrofit.create(KakaoApiService::class.java)
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -103,9 +132,13 @@ class MainMap : AppCompatActivity() {
                 Log.d("KakaoMap", "Map is ready!")
 
                 val labelManager = map.labelManager
+                val layer = labelManager?.getLayer()
+                layer?.removeAll()
 
                 map.setOnCameraMoveEndListener { kakaoMap, position, gestureType ->
                     // position 파라미터를 이용해서 원하는 작업을 수행
+
+
 
                     Log.d("camera stop", position.toString())
 
@@ -118,8 +151,10 @@ class MainMap : AppCompatActivity() {
                     val options = LabelOptions.from(LatLng.from(curLatLng))
                         .setStyles(styles)
 
-                    val layer = labelManager?.getLayer()
+
                     val label = layer?.addLabel(options);
+
+                    searchPlacesByCategory(curLatLng)
                 }
 
             }
@@ -145,6 +180,39 @@ class MainMap : AppCompatActivity() {
     override fun onDestroy() {
         super.onDestroy()
         mapView.pause() // 지도 종료
+    }
+
+    fun searchPlacesByCategory(latlng: LatLng) {
+        val apiKey = "KakaoAK ${BuildConfig.KAKAO_REST_API_KEY}"  // 카카오 REST API 키 (실제 키로 대체하세요)
+        val categoryCode = "FD6"  // 음식점 카테고리 코드
+        val longitude = latlng.longitude  // 경도 (예시: 서울)
+        val latitude = latlng.longitude   // 위도 (예시: 서울)
+        val radius = 1000        // 검색 반경 1km
+
+        apiService.searchByCategory(apiKey, categoryCode, longitude, latitude, radius)
+            .enqueue(object : Callback<CategorySearchResponse> {
+                override fun onResponse(
+                    call: Call<CategorySearchResponse>,
+                    response: Response<CategorySearchResponse>
+                ) {
+                    if (response.isSuccessful) {
+                        val places = response.body()?.documents
+                        places?.forEach {
+                            println("Place Name: ${it.place_name}")
+                            println("Category: ${it.category_name}")
+                            println("Address: ${it.address_name}")
+                            println("Phone: ${it.phone}")
+                            println("Latitude: ${it.latitude}, Longitude: ${it.longitude}")
+                        }
+                    } else {
+                        println("Request failed with code: ${response.code()}")
+                    }
+                }
+
+                override fun onFailure(call: Call<CategorySearchResponse>, t: Throwable) {
+                    println("Error: ${t.message}")
+                }
+            })
     }
 
 
