@@ -11,7 +11,9 @@ import android.widget.FrameLayout
 import android.widget.ImageButton
 import android.widget.TextView
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContentProviderCompat.requireContext
 import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.fragment.app.Fragment
@@ -150,21 +152,39 @@ class MainMap : AppCompatActivity() {
 //
 //
 //                    val label = layer?.addLabel(options);
+//                    val labelStyles = labelManager?.addLabelStyles(LabelStyles.from(LabelStyle.from(R.drawable.marker)))
 
                     val labelStyles = LabelStyles.from(LabelStyle.from(R.drawable.marker))
-                    val options = mutableListOf<LabelOptions>()
+                    var options = mutableListOf<LabelOptions>()
 
-                    val layer_ = kakaoMap.labelManager?.getLodLayer()
 
+                    val load_layer = kakaoMap.labelManager?.getLodLayer()
 
                     searchPlacesByCategory(curLatLng) { places ->
                         places?.forEach {place ->
+
+                            Log.d("place_information", "${place.placeName} ${place.latitude.toString()} ${place.longitude.toString()}")
+
                             val tempLatLng = LatLng.from(place.latitude, place.longitude)
-                            options.add(LabelOptions.from(tempLatLng).setStyles(labelStyles))
+                            val labelOptoins = LabelOptions.from(tempLatLng).setStyles(labelStyles).setTag(place)
+                            options.add(labelOptoins)
                         }
+                        load_layer?.addLodLabels(options)
+
                     }
 
-                    val label = layer?.addLabels(options)
+                    kakaoMap.setOnLodLabelClickListener { kakaoMap, layer, label ->
+                        val tag = label.tag
+                        if (tag is Matjip) {
+                            showPlaceDetailDialog(tag)
+
+                        } else {
+                            Log.e("LOD_CLICK", "Tag is not Matjip or is null: $tag")
+                        }
+                        true
+                    }
+
+
                 }
 
             }
@@ -174,9 +194,10 @@ class MainMap : AppCompatActivity() {
         mapView.start(lifeCycleCallback, readyCallback)
     }
 
-
-
-
+    fun showPlaceDetailDialog(place: Matjip) {
+        val bottomSheetFragment = PlaceDetailBottomSheetFragment(place)
+        bottomSheetFragment.show(supportFragmentManager, bottomSheetFragment.tag) // supportFragmentManager 사용
+    }
     override fun onResume() {
         super.onResume()
         mapView.resume() // 지도 resume
@@ -221,10 +242,5 @@ class MainMap : AppCompatActivity() {
             })
     }
 
-
-
-
-
-
-
 }
+
