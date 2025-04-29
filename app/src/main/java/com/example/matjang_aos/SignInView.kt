@@ -53,9 +53,13 @@ class SignInView : AppCompatActivity() {
                     Log.e(TAG, "자동 로그인 실패", error)
                 } else if (user != null) {
                     val user_default = UserModel(
-                        email = user.kakaoAccount?.email,
+                        email = user.kakaoAccount?.email ?: "",
+                        reviews = listOf(), // 자동 로그인 시에도 빈 리스트
                         type = Type.Kakao
                     )
+
+                    // **UserManager에 로그인 정보 등록 추가**
+                    UserManager.login(user_default)
 
                     val intent = Intent(this, MainMap::class.java)
                     intent.putExtra("user", user_default)
@@ -64,6 +68,7 @@ class SignInView : AppCompatActivity() {
                 }
             }
         }
+
 
         val signInBtn = findViewById<ImageButton>(R.id.signInKakao) as ImageButton
         signInBtn.setOnClickListener{
@@ -108,17 +113,31 @@ class SignInView : AppCompatActivity() {
                                 Log.e(TAG, "사용자 정보 요청 실패", error)
                             } else if (user != null) {
 
-                                val user_default =
-                                    UserModel(email = user.kakaoAccount?.email, type = Type.Kakao)
+                                val user_default = UserModel(
+                                    email = user.kakaoAccount?.email ?: "",
+                                    reviews = listOf(), // 초기에는 리뷰 없음
+                                    type = Type.Kakao
+                                )
 
+                                // 2. Firestore에 저장
+                                db.collection("users").document("${user.kakaoAccount?.email}&Kakao")
+                                    .set(user_default)
+                                    .addOnSuccessListener {
+                                        Log.d(TAG, "Firestore 저장 성공")
+                                    }
+                                    .addOnFailureListener { e ->
+                                        Log.e(TAG, "Firestore 저장 실패", e)
+                                    }
 
-                                db.collection("users").document(
-                                    "${user.kakaoAccount?.email}&Kakao"
-                                ).set(hashMapOf<String, Any>())
+                                // 3. UserManager에 로그인 처리
+                                UserManager.login(user_default)
 
-                                val intent = Intent(this, MainMap::class.java)
+                                // 4. SharedPreferences에 저장
                                 pref.edit().putString("token", token?.accessToken).apply()
                                 pref.edit().putString("email", user.kakaoAccount?.email).apply()
+
+                                // 5. MainMap으로 이동
+                                val intent = Intent(this, MainMap::class.java)
                                 startActivity(intent)
                                 finish()  // 현재 로그인 화면 종료
                             }
@@ -133,17 +152,31 @@ class SignInView : AppCompatActivity() {
                         if (error != null) {
                             Log.e(TAG, "사용자 정보 요청 실패", error)
                         } else if (user != null) {
-                            val user_default =
-                                UserModel(email = user.kakaoAccount?.email, type = Type.Kakao)
+                            val user_default = UserModel(
+                                email = user.kakaoAccount?.email ?: "",
+                                reviews = listOf(), // 초기에는 리뷰 없음
+                                type = Type.Kakao
+                            )
 
+                            // 2. Firestore에 저장
+                            db.collection("users").document("${user.kakaoAccount?.email}&Kakao")
+                                .set(user_default)
+                                .addOnSuccessListener {
+                                    Log.d(TAG, "Firestore 저장 성공")
+                                }
+                                .addOnFailureListener { e ->
+                                    Log.e(TAG, "Firestore 저장 실패", e)
+                                }
 
-                            db.collection("users").document(
-                                "${user.kakaoAccount?.email}&Kakao"
-                            ).set(hashMapOf<String, Any>())
+                            // 3. UserManager에 로그인 처리
+                            UserManager.login(user_default)
 
-                            val intent = Intent(this, MainMap::class.java)
+                            // 4. SharedPreferences에 저장
                             pref.edit().putString("token", token?.accessToken).apply()
                             pref.edit().putString("email", user.kakaoAccount?.email).apply()
+
+                            // 5. MainMap으로 이동
+                            val intent = Intent(this, MainMap::class.java)
                             startActivity(intent)
                             finish()  // 현재 로그인 화면 종료
                         }
