@@ -143,17 +143,6 @@ class MainMap : AppCompatActivity() {
 
                     val curLatLng = LatLng.from(position.position.latitude, position.position.longitude)
 
-
-//                    val styles = labelManager
-//                        ?.addLabelStyles(LabelStyles.from(LabelStyle.from(R.drawable.marker)))
-//
-//                    val options = LabelOptions.from(LatLng.from(curLatLng))
-//                        .setStyles(styles)
-//
-//
-//                    val label = layer?.addLabel(options);
-//                    val labelStyles = labelManager?.addLabelStyles(LabelStyles.from(LabelStyle.from(R.drawable.marker)))
-
                     val labelStyles = LabelStyles.from(LabelStyle.from(R.drawable.marker))
                     var options = mutableListOf<LabelOptions>()
 

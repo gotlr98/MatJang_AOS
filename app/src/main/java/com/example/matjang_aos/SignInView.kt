@@ -25,58 +25,31 @@ import com.google.firebase.ktx.Firebase
 
 class SignInView : AppCompatActivity() {
 
-    val db = Firebase.firestore
+    private val TAG = "SignInView"
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-//        if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-//            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE), 1)
-//        }
-
-
-        enableEdgeToEdge()
         setContentView(R.layout.activity_sign_in_view)
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
-            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
-            insets
-        }
 
-        val pref by lazy { getSharedPreferences("signIn", Context.MODE_PRIVATE) }
-
+        val pref = getSharedPreferences("signIn", Context.MODE_PRIVATE)
         val token = pref.getString("token", null)
+        val email = pref.getString("email", null)
 
-        if (token != null) {
-            // 이미 로그인된 상태 -> 사용자 정보 요청
-            UserApiClient.instance.me { user, error ->
-                if (error != null) {
-                    Log.e(TAG, "자동 로그인 실패", error)
-                } else if (user != null) {
-                    val user_default = UserModel(
-                        email = user.kakaoAccount?.email ?: "",
-                        reviews = listOf(), // 자동 로그인 시에도 빈 리스트
-                        type = Type.Kakao
-                    )
-
-                    // **UserManager에 로그인 정보 등록 추가**
-                    UserManager.login(user_default)
-
-                    val intent = Intent(this, MainMap::class.java)
-                    intent.putExtra("user", user_default)
-                    startActivity(intent)
-                    finish() // 현재 로그인 화면 종료
-                }
+        // ✅ 자동 로그인 처리
+        if (token != null && email != null) {
+            UserManager.init(this, email) {
+                goToMainMap()
             }
         }
 
-
-        val signInBtn = findViewById<ImageButton>(R.id.signInKakao) as ImageButton
-        signInBtn.setOnClickListener{
+        val signInBtn = findViewById<ImageButton>(R.id.signInKakao)
+        signInBtn.setOnClickListener {
             signInKakao()
         }
     }
 
-    fun signInKakao() {
+    private fun signInKakao() {
+        val pref = getSharedPreferences("signIn", Context.MODE_PRIVATE)
 
         val callback: (OAuthToken?, Throwable?) -> Unit = { token, error ->
             if (error != null) {
@@ -86,144 +59,53 @@ class SignInView : AppCompatActivity() {
             }
         }
 
-        val pref by lazy { getSharedPreferences("signIn", Context.MODE_PRIVATE) }
-
-
         if (UserApiClient.instance.isKakaoTalkLoginAvailable(this)) {
-            // 카카오톡 로그인
+            // ✅ 카카오톡 앱 로그인
             UserApiClient.instance.loginWithKakaoTalk(this) { token, error ->
-                // 로그인 실패 부분
-                if (error != null) {
-                    Log.e(TAG, "로그인 실패 $error")
-                    // 사용자가 취소
-                    if (error is ClientError && error.reason == ClientErrorCause.Cancelled) {
-                        return@loginWithKakaoTalk
-                    }
-                    // 다른 오류
-                    else {
-                        UserApiClient.instance.loginWithKakaoAccount(
-                            this,
-                            callback = callback
+                handleLoginResult(token, error, pref)
+            }
+        } else {
+            // ✅ 카카오 계정(웹뷰) 로그인
+            UserApiClient.instance.loginWithKakaoAccount(this, callback = { token, error ->
+                handleLoginResult(token, error, pref)
+            })
+        }
+    }
 
+    private fun handleLoginResult(token: OAuthToken?, error: Throwable?, pref: SharedPreferences) {
+        if (error != null) {
+            Log.e("SignInView", "로그인 실패 $error")
+            if (error is ClientError && error.reason == ClientErrorCause.Cancelled) return
+        }
 
-                        ) // 카카오 이메일 로그인
-
-                        UserApiClient.instance.me { user, error ->
-                            if (error != null) {
-                                Log.e(TAG, "사용자 정보 요청 실패", error)
-                            } else if (user != null) {
-
-                                val user_default = UserModel(
-                                    email = user.kakaoAccount?.email ?: "",
-                                    reviews = listOf(), // 초기에는 리뷰 없음
-                                    type = Type.Kakao
-                                )
-
-                                // 2. Firestore에 저장
-                                db.collection("users").document("${user.kakaoAccount?.email}&Kakao")
-                                    .set(user_default)
-                                    .addOnSuccessListener {
-                                        Log.d(TAG, "Firestore 저장 성공")
-                                    }
-                                    .addOnFailureListener { e ->
-                                        Log.e(TAG, "Firestore 저장 실패", e)
-                                    }
-
-                                // 3. UserManager에 로그인 처리
-                                UserManager.login(user_default)
-
-                                // 4. SharedPreferences에 저장
-                                pref.edit().putString("token", token?.accessToken).apply()
-                                pref.edit().putString("email", user.kakaoAccount?.email).apply()
-
-                                // 5. MainMap으로 이동
-                                val intent = Intent(this, MainMap::class.java)
-                                startActivity(intent)
-                                finish()  // 현재 로그인 화면 종료
-                            }
-                        }
-
-                    }
+        if (token != null) {
+            UserApiClient.instance.me { user, error ->
+                if (error != null || user == null) {
+                    Log.e("SignInView", "사용자 정보 요청 실패", error)
+                    return@me
                 }
-                // 로그인 성공 부분
-                else if (token != null) {
-                    Log.e(TAG, "로그인 성공 ${token.accessToken}")
-                    UserApiClient.instance.me { user, error ->
-                        if (error != null) {
-                            Log.e(TAG, "사용자 정보 요청 실패", error)
-                        } else if (user != null) {
-                            val user_default = UserModel(
-                                email = user.kakaoAccount?.email ?: "",
-                                reviews = listOf(), // 초기에는 리뷰 없음
-                                type = Type.Kakao
-                            )
 
-                            // 2. Firestore에 저장
-                            db.collection("users").document("${user.kakaoAccount?.email}&Kakao")
-                                .set(user_default)
-                                .addOnSuccessListener {
-                                    Log.d(TAG, "Firestore 저장 성공")
-                                }
-                                .addOnFailureListener { e ->
-                                    Log.e(TAG, "Firestore 저장 실패", e)
-                                }
+                val email = user.kakaoAccount?.email ?: ""
+                if (email.isBlank()) {
+                    Log.e("SignInView", "이메일 정보 없음")
+                    return@me
+                }
 
-                            // 3. UserManager에 로그인 처리
-                            UserManager.login(user_default)
+                // ✅ 토큰 & 이메일 SharedPreferences 저장
+                pref.edit().putString("token", token.accessToken).apply()
+                pref.edit().putString("email", email).apply()
 
-                            // 4. SharedPreferences에 저장
-                            pref.edit().putString("token", token?.accessToken).apply()
-                            pref.edit().putString("email", user.kakaoAccount?.email).apply()
-
-                            // 5. MainMap으로 이동
-                            val intent = Intent(this, MainMap::class.java)
-                            startActivity(intent)
-                            finish()  // 현재 로그인 화면 종료
-                        }
-                    }
-
+                // ✅ UserManager 초기화 (Firestore 저장 포함)
+                UserManager.init(this, email) {
+                    goToMainMap()
                 }
             }
         }
-        else {
-            UserApiClient.instance.loginWithKakaoAccount(this) { token, error ->
-                if (error != null) {
-                    Log.e(TAG, "카카오계정으로 로그인 실패", error)
-                } else if (token != null) {
-                    Log.i(TAG, "카카오계정으로 로그인 성공 ${token.accessToken}")
+    }
 
-                    // SharedPreferences에 토큰 저장
-                    pref.edit().putString("token", token.accessToken).apply()
-                    Log.i(TAG, "SharedPreferences 저장 성공")
-                    // 사용자 정보 요청
-                    UserApiClient.instance.me { user, error ->
-                        if (error != null) {
-                            Log.e(TAG, "사용자 정보 요청 실패", error)
-                        } else if (user != null) {
-//                            val user_default = UserModel(
-//                                email = user.kakaoAccount?.email,
-//                                type = Type.Kakao
-//                            )
-
-                            pref.edit().putString("email", user.kakaoAccount?.email).apply()
-
-                            db.collection("users").document(
-                                "${user.kakaoAccount?.email}&Kakao"
-                            ).set(hashMapOf<String, Any>())
-
-                            val intent = Intent(this, MainMap::class.java)
-                            pref.edit().putString("token", token.accessToken).apply()
-                            pref.edit().putString("email", user.kakaoAccount?.email).apply()
-                            startActivity(intent)
-                            Log.d(TAG, "MainMap 화면으로 이동")
-                            finish()  // 현재 로그인 화면 종료
-                            Log.d(TAG, "로그인 화면 종료")
-                        }
-                    }
-                }
-            }
-        }
-
-
+    private fun goToMainMap() {
+        val intent = Intent(this, MainMap::class.java)
+        startActivity(intent)
+        finish()
     }
 }
