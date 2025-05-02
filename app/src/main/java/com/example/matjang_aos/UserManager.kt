@@ -45,6 +45,8 @@ object UserManager {
         userJson?.let {
             _currentUser = Gson().fromJson(it, UserModel::class.java)
         }
+
+        Log.d("UserManager", "loaded user json: $userJson")
     }
 
     /**
@@ -61,6 +63,8 @@ object UserManager {
                     _currentUser = user
                     saveUserToPrefs(context)
                     onComplete(user)
+                    Log.d("UserManager", "saved email to prefs: ${user.email}")
+
                 } else {
                     val newUser = UserModel(email = email, type = Type.Kakao, reviews = emptyList())
                     db.collection("users").document(docId).set(newUser)
@@ -69,12 +73,14 @@ object UserManager {
                             _currentUser = newUser
                             saveUserToPrefs(context)
                             onComplete(newUser)
+
                         }
                         .addOnFailureListener { e ->
                             Log.e("UserManager", "새 유저 저장 실패: ${e.message}")
                             _currentUser = newUser
                             saveUserToPrefs(context)
                             onComplete(newUser)
+
                         }
                 }
             }
@@ -84,6 +90,7 @@ object UserManager {
                 _currentUser = fallbackUser
                 saveUserToPrefs(context)
                 onComplete(fallbackUser)
+
             }
     }
 }

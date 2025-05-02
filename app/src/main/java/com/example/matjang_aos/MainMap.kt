@@ -78,6 +78,14 @@ class MainMap : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main_map) //
 
+        UserManager.loadUserFromPrefs(this)
+
+        if (UserManager.currentUser == null) {
+            Toast.makeText(this, "로그인 정보가 없습니다.", Toast.LENGTH_SHORT).show()
+            finish()
+            return
+        }
+
 
         drawerLayout = findViewById(R.id.drawer_layout)
         navigationView = findViewById(R.id.navigation_view)
@@ -148,6 +156,7 @@ class MainMap : AppCompatActivity() {
 
 
                     val load_layer = kakaoMap.labelManager?.getLodLayer()
+                    load_layer?.removeAll()
 
                     searchPlacesByCategory(curLatLng) { places ->
                         places?.forEach {place ->
@@ -184,12 +193,27 @@ class MainMap : AppCompatActivity() {
     }
 
     fun showPlaceDetailDialog(place: Matjip) {
+        val fragmentManager = supportFragmentManager
+        val existingFragment = fragmentManager.findFragmentByTag("place_detail")
+
+        if (existingFragment != null && existingFragment is PlaceDetailBottomSheetFragment) {
+            if (existingFragment.isAdded) {
+                fragmentManager.beginTransaction()
+                    .remove(existingFragment)
+                    .commitAllowingStateLoss()
+            }
+        }
+
         val bottomSheetFragment = PlaceDetailBottomSheetFragment(place)
-        bottomSheetFragment.show(supportFragmentManager, bottomSheetFragment.tag) // supportFragmentManager 사용
+        if (!bottomSheetFragment.isAdded) {
+            bottomSheetFragment.show(fragmentManager, "place_detail")
+        }
     }
     override fun onResume() {
         super.onResume()
         mapView.resume() // 지도 resume
+        Log.d("map", "map resume")
+
     }
 
     override fun onPause() {

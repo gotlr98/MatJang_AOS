@@ -1,9 +1,11 @@
 package com.example.matjang_aos
 
 import android.os.Bundle
+import android.util.Log
 import android.widget.Button
 import android.widget.EditText
 import android.widget.RatingBar
+import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
@@ -50,6 +52,12 @@ class ReviewWrite : AppCompatActivity() {
         val comment = reviewEditText.text.toString()
         val user = UserManager.currentUser ?: return
 
+        val email = user.email
+        if (email.isNullOrBlank()) {
+            Log.d("email", "email is null")
+            return
+        }
+
         val review = mapOf(
             "rate" to rating,
             "comment" to comment,
@@ -59,7 +67,7 @@ class ReviewWrite : AppCompatActivity() {
         val db = Firebase.firestore
 
         db.collection("review")
-            .document(place.placeName)
+            .document(place.placeName.replace("/","_"))
             .collection("reviews")
             .document(user.email ?: "")
             .set(review)

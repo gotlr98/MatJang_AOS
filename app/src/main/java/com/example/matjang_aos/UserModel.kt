@@ -9,11 +9,9 @@ enum class Type {
     Kakao, Guest
 }
 
-@Parcelize
 data class UserModel(
 
     val email: String = "",
     val type: Type = Type.Kakao,
     val reviews: List<Review> = emptyList()
-
-) : Parcelable
+)
