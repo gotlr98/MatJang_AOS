@@ -50,13 +50,20 @@ class ReviewWrite : AppCompatActivity() {
     private fun showConfirmDialog(){
         val rating = ratingBar.rating.toDouble()
         val comment = reviewEditText.text.toString()
-        val user = UserManager.currentUser ?: return
+        val user = UserManager.currentUser
+
+        if (user == null) {
+            Log.e("ReviewWrite", "User is null")
+            return
+        }
 
         val email = user.email
         if (email.isNullOrBlank()) {
             Log.d("email", "email is null")
             return
         }
+
+        Log.d("ReviewWrite", "Submit button clicked")
 
         val review = mapOf(
             "rate" to rating,
@@ -92,6 +99,10 @@ class ReviewWrite : AppCompatActivity() {
 
                 UserManager.login(updatedUser)
                 UserManager.saveUserToPrefs(this)
+            }
+            .addOnFailureListener {
+                Toast.makeText(this, "리뷰 저장 실패", Toast.LENGTH_SHORT).show()
+                Log.e("Firestore", "리뷰 저장 실패", it)
             }
     }
 }
