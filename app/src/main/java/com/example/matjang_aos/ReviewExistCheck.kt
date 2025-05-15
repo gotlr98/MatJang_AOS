@@ -5,24 +5,20 @@ import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 
 object ReviewUtil {
-    fun checkIfUserReviewed(
-        userEmail: String,
-        placeName: String,
-        onResult: (Boolean) -> Unit
-    ) {
+    fun checkIfUserReviewed(userEmail: String, placeName: String, callback: (Boolean) -> Unit) {
+        val sanitizedPlaceName = placeName.replace("/", "_")
         val db = Firebase.firestore
-        val docRef = db.collection("users")
-            .document("$userEmail&Kakao")
-            .collection("review")
-            .document(placeName)
 
-        docRef.get()
+        db.collection("users")
+            .document("${userEmail}&Kakao")
+            .collection("review")
+            .document(sanitizedPlaceName)
+            .get()
             .addOnSuccessListener { document ->
-                onResult(document.exists())  // true면 작성한 것
+                callback(document.exists())
             }
-            .addOnFailureListener { e ->
-                Log.e("ReviewCheck", "리뷰 확인 실패: ${e.message}")
-                onResult(false)
+            .addOnFailureListener {
+                callback(false)
             }
     }
 }

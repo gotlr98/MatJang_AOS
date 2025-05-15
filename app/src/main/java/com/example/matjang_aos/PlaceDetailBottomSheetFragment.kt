@@ -51,10 +51,12 @@ class PlaceDetailBottomSheetFragment(private val place: Matjip) : BottomSheetDia
 
             ReviewUtil.checkIfUserReviewed(userEmail, placeName) { hasReviewed ->
                 val intent = if (hasReviewed) {
-                    Intent(requireContext(), ReviewDetail::class.java)
+                    Intent(requireContext(), ReviewDetail::class.java).apply {
+                        putExtra("place", place) // 추가
+                    }
                 } else {
                     Intent(requireContext(), ReviewWrite::class.java).apply {
-                        putExtra("place", place) // Matjip 객체를 전달
+                        putExtra("place", place)
                     }
                 }
                 startActivity(intent)
