@@ -10,5 +10,6 @@ class GlobalApplication: Application() {
         super.onCreate()
 
         KakaoSdk.init(this, BuildConfig.NATIVE_APP_KEY)
+        UserManager.loadUserFromPrefs(this)
     }
 }

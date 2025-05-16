@@ -80,6 +80,7 @@ class MainMap : AppCompatActivity() {
 
         UserManager.loadUserFromPrefs(this)
 
+
         if (UserManager.currentUser == null) {
             Toast.makeText(this, "로그인 정보가 없습니다.", Toast.LENGTH_SHORT).show()
             finish()

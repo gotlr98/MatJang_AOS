@@ -26,8 +26,12 @@ class PlaceDetailBottomSheetFragment(private val place: Matjip) : BottomSheetDia
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
+        UserManager.loadUserFromPrefs(requireContext())
+        Log.d("BottomSheet", "email: ${UserManager.currentUser?.email}")
         setStyle(STYLE_NORMAL, R.style.BottomSheetDialogTheme)
         val view = inflater.inflate(R.layout.fragment_place_detail_bottom_sheet, container, false)
+
+
 
         // View에서 필요한 부분 찾고, 데이터를 설정
         val placeNameTextView: TextView = view.findViewById(R.id.place_name)
@@ -43,16 +47,20 @@ class PlaceDetailBottomSheetFragment(private val place: Matjip) : BottomSheetDia
         binding.placeName.text = place.placeName
         binding.address.text = place.address
 
-        // BottomSheet 전체를 클릭했을 때 처리
+        // ✅ 장소 클릭 시 리뷰 확인 및 이동
         binding.root.setOnClickListener {
-//            checkReviewAndNavigate()
-            val userEmail = UserManager.currentUser?.email ?: return@setOnClickListener
-            val placeName = place.placeName
+            val userEmail = UserManager.currentUser?.email
+            if (userEmail.isNullOrBlank()) {
+                Toast.makeText(requireContext(), "로그인 정보가 없습니다.", Toast.LENGTH_SHORT).show()
+                dismiss()
+                return@setOnClickListener
+            }
 
+            val placeName = place.placeName
             ReviewUtil.checkIfUserReviewed(userEmail, placeName) { hasReviewed ->
                 val intent = if (hasReviewed) {
                     Intent(requireContext(), ReviewDetail::class.java).apply {
-                        putExtra("place", place) // 추가
+                        putExtra("place", place)
                     }
                 } else {
                     Intent(requireContext(), ReviewWrite::class.java).apply {
@@ -60,15 +68,23 @@ class PlaceDetailBottomSheetFragment(private val place: Matjip) : BottomSheetDia
                     }
                 }
                 startActivity(intent)
-                dismiss() // BottomSheet 닫기
+                dismiss()
             }
         }
 
-
+        // ✅ 북마크 버튼 클릭 시 유저 정보 없으면 처리
         binding.bookmarkButton.setOnClickListener {
+            val user = UserManager.currentUser
+            if (user == null) {
+                Toast.makeText(requireContext(), "로그인 후 이용해주세요.", Toast.LENGTH_SHORT).show()
+                dismiss()
+                return@setOnClickListener
+            }
+
             showBookmarkDialog()
         }
     }
+
 
     override fun onDestroyView() {
         super.onDestroyView()
