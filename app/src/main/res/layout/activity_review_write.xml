@@ -8,6 +8,14 @@
     android:padding="20dp"
     android:background="@android:color/white">
 
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/reviewToolbar"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        android:background="?attr/colorPrimary"
+        android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
+        android:popupTheme="@style/ThemeOverlay.AppCompat.Light" />
+
     <RatingBar
         android:id="@+id/ratingBar"
         android:layout_width="wrap_content"

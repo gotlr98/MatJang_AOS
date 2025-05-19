@@ -1,5 +1,6 @@
 package com.example.matjang_aos
 
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.widget.Button
@@ -18,6 +19,8 @@ class ReviewWrite : AppCompatActivity() {
     private lateinit var ratingBar: RatingBar
     private lateinit var reviewEditText: EditText
     private lateinit var submitBtn: Button
+    private lateinit var cancelBtn: Button
+
 
     private lateinit var place: Matjip
 
@@ -33,6 +36,11 @@ class ReviewWrite : AppCompatActivity() {
             insets
         }
 
+        val toolbar = findViewById<androidx.appcompat.widget.Toolbar>(R.id.reviewToolbar)
+        setSupportActionBar(toolbar)
+        supportActionBar?.setDisplayHomeAsUpEnabled(true) // 뒤로가기 아이콘 표시
+        supportActionBar?.title = "리뷰 작성"
+
         place = intent.getSerializableExtra("place") as Matjip
 
         ratingBar = findViewById(R.id.ratingBar)
@@ -45,9 +53,15 @@ class ReviewWrite : AppCompatActivity() {
         submitBtn.setOnClickListener {
             showConfirmDialog()
         }
+
     }
 
-    private fun showConfirmDialog(){
+    override fun onSupportNavigateUp(): Boolean {
+        finish()
+        return true
+    }
+
+    private fun showConfirmDialog() {
         val rating = ratingBar.rating.toDouble()
         val comment = reviewEditText.text.toString()
         val user = UserManager.currentUser
@@ -68,19 +82,19 @@ class ReviewWrite : AppCompatActivity() {
         val review = mapOf(
             "rate" to rating,
             "comment" to comment,
-            "user_email" to user.email
+            "user_email" to email
         )
 
         val db = Firebase.firestore
 
         db.collection("review")
-            .document(place.placeName.replace("/","_"))
+            .document(place.placeName.replace("/", "_"))
             .collection("reviews")
-            .document(user.email ?: "")
+            .document(email)
             .set(review)
 
         db.collection("users")
-            .document("${user.email}&kakao")
+            .document("${email}&kakao")
             .collection("review")
             .document(place.placeName)
             .set(review)
@@ -89,20 +103,27 @@ class ReviewWrite : AppCompatActivity() {
                     placeName = place.placeName,
                     rate = rating,
                     comment = comment,
-                    user_email = user.email ?: "",
+                    user_email = email,
                     address = place.address ?: ""
                 )
 
                 val updatedUser = user.copy(
-                    reviews = user.reviews + newReview // 전체 리뷰 정보를 추가
+                    reviews = user.reviews + newReview
                 )
 
                 UserManager.login(updatedUser)
                 UserManager.saveUserToPrefs(this)
+
+                // ✅ MainMap 화면으로 이동
+                val intent = Intent(this, MainMap::class.java)
+                intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
+                startActivity(intent)
+                finish() // 현재 액티비티 종료
             }
             .addOnFailureListener {
                 Toast.makeText(this, "리뷰 저장 실패", Toast.LENGTH_SHORT).show()
                 Log.e("Firestore", "리뷰 저장 실패", it)
             }
     }
+
 }

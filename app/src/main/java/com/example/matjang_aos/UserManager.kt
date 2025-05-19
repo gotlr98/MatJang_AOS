@@ -42,12 +42,23 @@ object UserManager {
     fun loadUserFromPrefs(context: Context) {
         val sharedPref = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
         val userJson = sharedPref.getString(KEY_USER, null)
+
         userJson?.let {
-            _currentUser = Gson().fromJson(it, UserModel::class.java)
+            val loadedUser = Gson().fromJson(it, UserModel::class.java)
+
+            // ✅ 이메일이 비어 있으면 무시 (초기화하지 않음)
+            if (loadedUser.email.isNullOrBlank()) {
+                Log.w("UserManager", "저장된 사용자 이메일이 비어있음. 초기화하지 않음.")
+                _currentUser = null
+                return
+            }
+
+            _currentUser = loadedUser
         }
 
         Log.d("UserManager", "loaded user json: $userJson")
     }
+
 
     /**
      * Firebase에서 유저 정보 초기화 및 SharedPreferences 저장

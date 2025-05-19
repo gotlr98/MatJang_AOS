@@ -27,9 +27,17 @@ class SignInView : AppCompatActivity() {
 
     private val TAG = "SignInView"
 
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_sign_in_view)
+
+        val brokenPref = getSharedPreferences("user_prefs", Context.MODE_PRIVATE)
+        val brokenEmail = brokenPref.getString("current_user", "") ?: ""
+        if (brokenEmail.contains("\"email\":\"\"")) {
+            brokenPref.edit().clear().apply()
+            Log.d("SignInView", "잘못 저장된 유저 정보 삭제됨")
+        }
 
         val pref = getSharedPreferences("signIn", Context.MODE_PRIVATE)
         val token = pref.getString("token", null)
@@ -85,23 +93,23 @@ class SignInView : AppCompatActivity() {
                     return@me
                 }
 
-                val email = user.kakaoAccount?.email ?: ""
-                if (email.isBlank()) {
-                    Log.e("SignInView", "이메일 정보 없음")
+                val email = user.kakaoAccount?.email
+                if (email.isNullOrBlank()) {
+                    Log.e("SignInView", "이메일 정보 없음 (null or blank)")
                     return@me
                 }
 
-                // ✅ 토큰 & 이메일 SharedPreferences 저장
+                // ✅ 유효한 이메일일 때만 저장 및 초기화
                 pref.edit().putString("token", token.accessToken).apply()
                 pref.edit().putString("email", email).apply()
 
-                // ✅ UserManager 초기화 (Firestore 저장 포함)
                 UserManager.init(this, email) {
                     goToMainMap()
                 }
             }
         }
     }
+
 
     private fun goToMainMap() {
         val intent = Intent(this, MainMap::class.java)
