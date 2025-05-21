@@ -9,10 +9,10 @@ object ReviewUtil {
         val sanitizedPlaceName = placeName.replace("/", "_")
         val db = Firebase.firestore
 
-        Log.d("email", "${userEmail}&Kakao")
+        Log.d("email", "${userEmail}&kakao")
 
         db.collection("users")
-            .document("${userEmail}&Kakao")
+            .document("${userEmail}&kakao")
             .collection("review")
             .document(sanitizedPlaceName)
             .get()

@@ -24,8 +24,6 @@ class ReviewWrite : AppCompatActivity() {
 
     private lateinit var place: Matjip
 
-
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -77,7 +75,7 @@ class ReviewWrite : AppCompatActivity() {
             return
         }
 
-        Log.d("ReviewWrite", "Submit button clicked")
+        val sanitizedPlaceName = place.placeName.replace("/", "_") // ✅ 통일된 이름
 
         val review = mapOf(
             "rate" to rating,
@@ -88,15 +86,15 @@ class ReviewWrite : AppCompatActivity() {
         val db = Firebase.firestore
 
         db.collection("review")
-            .document(place.placeName.replace("/", "_"))
+            .document(sanitizedPlaceName)
             .collection("reviews")
-            .document(email)
+            .document("${email}&kakao")
             .set(review)
 
         db.collection("users")
-            .document("${email}&kakao")
+            .document("${email}&kakao") // ✅ 일관된 casing
             .collection("review")
-            .document(place.placeName)
+            .document(sanitizedPlaceName) // ✅ 동일한 이름 사용
             .set(review)
             .addOnSuccessListener {
                 val newReview = Review(
@@ -118,12 +116,13 @@ class ReviewWrite : AppCompatActivity() {
                 val intent = Intent(this, MainMap::class.java)
                 intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
                 startActivity(intent)
-                finish() // 현재 액티비티 종료
+                finish()
             }
             .addOnFailureListener {
                 Toast.makeText(this, "리뷰 저장 실패", Toast.LENGTH_SHORT).show()
                 Log.e("Firestore", "리뷰 저장 실패", it)
             }
     }
+
 
 }
