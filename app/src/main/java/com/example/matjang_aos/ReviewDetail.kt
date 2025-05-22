@@ -41,35 +41,42 @@ class ReviewDetail : AppCompatActivity() {
 
         val userEmail = UserManager.currentUser?.email
         if (userEmail != null) {
-            loadReview(userEmail, place.placeName)
+            loadAllReviews(place.placeName)
+
         } else {
             Toast.makeText(this, "로그인 정보가 없습니다.", Toast.LENGTH_SHORT).show()
         }
     }
 
-    private fun loadReview(userEmail: String, placeName: String) {
+    private fun loadAllReviews(placeName: String) {
         val db = Firebase.firestore
         val sanitizedPlaceName = placeName.replace("/", "_")
 
-        db.collection("users")
-            .document("${userEmail}&Kakao")
-            .collection("review")
+        db.collection("review")
             .document(sanitizedPlaceName)
+            .collection("users")  // 모든 사용자 리뷰
             .get()
-            .addOnSuccessListener { document ->
-                if (document.exists()) {
-                    val rate = document.getDouble("rate") ?: 0.0
-                    val review = document.getString("comment") ?: "내용 없음"
-
-                    rateTextView.text = "평점: $rate"
-                    reviewTextView.text = review
-                } else {
-                    Toast.makeText(this, "리뷰 정보가 없습니다.", Toast.LENGTH_SHORT).show()
+            .addOnSuccessListener { documents ->
+                if (documents.isEmpty) {
+                    Toast.makeText(this, "작성된 리뷰가 없습니다.", Toast.LENGTH_SHORT).show()
+                    return@addOnSuccessListener
                 }
+
+                val stringBuilder = StringBuilder()
+                for (doc in documents) {
+                    val rate = doc.getDouble("rate") ?: 0.0
+                    val comment = doc.getString("comment") ?: "내용 없음"
+                    val user = doc.getString("user_email") ?: "익명"
+
+                    stringBuilder.append("👤 $user\n⭐ $rate\n📝 $comment\n\n")
+                }
+
+                reviewTextView.text = stringBuilder.toString()
             }
             .addOnFailureListener {
                 Toast.makeText(this, "리뷰 불러오기 실패", Toast.LENGTH_SHORT).show()
                 Log.e("ReviewDetail", "리뷰 로딩 실패: ${it.message}")
             }
     }
+
 }

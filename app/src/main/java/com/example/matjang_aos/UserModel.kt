@@ -6,12 +6,12 @@ import kotlinx.android.parcel.Parcelize
 import kotlinx.android.parcel.RawValue
 
 enum class Type {
-    Kakao, Guest
+    kakao, Guest
 }
 
 data class UserModel(
 
     val email: String = "",
-    val type: Type = Type.Kakao,
+    val type: Type = Type.kakao,
     val reviews: List<Review> = emptyList()
 )

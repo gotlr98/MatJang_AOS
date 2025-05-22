@@ -9,4 +9,4 @@ data class Review(
     val comment: String = "",
     val user_email: String = "",
     val address: String = ""
-)
+): java.io.Serializable

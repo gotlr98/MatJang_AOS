@@ -33,7 +33,7 @@ android {
         manifestPlaceholders["KAKAO_NATIVE_APP_KEY"] = project.properties["KAKAO_NATIVE_APP_KEY"].toString()
         manifestPlaceholders["KAKAO_REST_API_KEY"] = project.properties["KAKAO_REST_API_KEY"].toString()
 
-        buildConfigField("String", "KAKAO_REST_API_KEY", properties.getProperty("KAKAO_REST_API_KEY"))
+        buildConfigField("String", "KAKAO_REST_API_KEY", "\"${properties.getProperty("KAKAO_REST_API_KEY")}\"")
     }
 
 
@@ -82,4 +82,7 @@ dependencies {
     implementation ("com.squareup.retrofit2:retrofit:2.9.0")
     implementation ("com.squareup.retrofit2:converter-gson:2.9.0")
     implementation ("com.squareup.okhttp3:okhttp:4.9.0")
+
+    implementation("com.google.android.gms:play-services-location:21.0.1")
+
 }

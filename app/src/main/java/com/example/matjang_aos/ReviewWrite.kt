@@ -7,7 +7,6 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.RatingBar
 import android.widget.Toast
-import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
@@ -19,15 +18,13 @@ class ReviewWrite : AppCompatActivity() {
     private lateinit var ratingBar: RatingBar
     private lateinit var reviewEditText: EditText
     private lateinit var submitBtn: Button
-    private lateinit var cancelBtn: Button
-
 
     private lateinit var place: Matjip
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
         setContentView(R.layout.activity_review_write)
+
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
@@ -36,7 +33,7 @@ class ReviewWrite : AppCompatActivity() {
 
         val toolbar = findViewById<androidx.appcompat.widget.Toolbar>(R.id.reviewToolbar)
         setSupportActionBar(toolbar)
-        supportActionBar?.setDisplayHomeAsUpEnabled(true) // 뒤로가기 아이콘 표시
+        supportActionBar?.setDisplayHomeAsUpEnabled(true)
         supportActionBar?.title = "리뷰 작성"
 
         place = intent.getSerializableExtra("place") as Matjip
@@ -49,9 +46,8 @@ class ReviewWrite : AppCompatActivity() {
         ratingBar.numStars = 5
 
         submitBtn.setOnClickListener {
-            showConfirmDialog()
+            submitReview()
         }
-
     }
 
     override fun onSupportNavigateUp(): Boolean {
@@ -59,70 +55,43 @@ class ReviewWrite : AppCompatActivity() {
         return true
     }
 
-    private fun showConfirmDialog() {
+    private fun submitReview() {
         val rating = ratingBar.rating.toDouble()
         val comment = reviewEditText.text.toString()
         val user = UserManager.currentUser
 
-        if (user == null) {
-            Log.e("ReviewWrite", "User is null")
+        if (user == null || user.email.isNullOrBlank()) {
+            Toast.makeText(this, "로그인 정보가 없습니다.", Toast.LENGTH_SHORT).show()
             return
         }
 
         val email = user.email
-        if (email.isNullOrBlank()) {
-            Log.d("email", "email is null")
-            return
-        }
-
-        val sanitizedPlaceName = place.placeName.replace("/", "_") // ✅ 통일된 이름
-
-        val review = mapOf(
-            "rate" to rating,
-            "comment" to comment,
-            "user_email" to email
+        val review = Review(
+            placeName = place.placeName,
+            rate = rating,
+            comment = comment,
+            user_email = email,
+            address = place.address ?: ""
         )
 
         val db = Firebase.firestore
+        val userRef = db.collection("users").document(email)
 
-        db.collection("review")
-            .document(sanitizedPlaceName)
-            .collection("reviews")
-            .document("${email}&kakao")
-            .set(review)
-
-        db.collection("users")
-            .document("${email}&kakao") // ✅ 일관된 casing
-            .collection("review")
-            .document(sanitizedPlaceName) // ✅ 동일한 이름 사용
-            .set(review)
+        // Firestore의 배열 필드에 review 추가
+        userRef.update("reviews", com.google.firebase.firestore.FieldValue.arrayUnion(review))
             .addOnSuccessListener {
-                val newReview = Review(
-                    placeName = place.placeName,
-                    rate = rating,
-                    comment = comment,
-                    user_email = email,
-                    address = place.address ?: ""
-                )
-
-                val updatedUser = user.copy(
-                    reviews = user.reviews + newReview
-                )
-
+                val updatedUser = user.copy(reviews = user.reviews + review)
                 UserManager.login(updatedUser)
                 UserManager.saveUserToPrefs(this)
 
-                // ✅ MainMap 화면으로 이동
                 val intent = Intent(this, MainMap::class.java)
                 intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
                 startActivity(intent)
                 finish()
             }
-            .addOnFailureListener {
+            .addOnFailureListener { e ->
                 Toast.makeText(this, "리뷰 저장 실패", Toast.LENGTH_SHORT).show()
-                Log.e("Firestore", "리뷰 저장 실패", it)
+                Log.e("Firestore", "리뷰 저장 실패", e)
             }
     }
-
-
 }

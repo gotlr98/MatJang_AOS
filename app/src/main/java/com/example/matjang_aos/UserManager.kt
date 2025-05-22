@@ -65,7 +65,7 @@ object UserManager {
      */
     fun init(context: Context, email: String, onComplete: (UserModel) -> Unit) {
         val db = Firebase.firestore
-        val docId = "$email&Kakao"
+        val docId = "$email&kakao"
 
         db.collection("users").document(docId).get()
             .addOnSuccessListener { doc ->
@@ -77,7 +77,7 @@ object UserManager {
                     Log.d("UserManager", "saved email to prefs: ${user.email}")
 
                 } else {
-                    val newUser = UserModel(email = email, type = Type.Kakao, reviews = emptyList())
+                    val newUser = UserModel(email = email, type = Type.kakao, reviews = emptyList())
                     db.collection("users").document(docId).set(newUser)
                         .addOnSuccessListener {
                             // 하위 컬렉션은 이후 bookmark, review 액션 시점에 생성
@@ -97,7 +97,7 @@ object UserManager {
             }
             .addOnFailureListener {
                 Log.e("UserManager", "유저 불러오기 실패: ${it.message}")
-                val fallbackUser = UserModel(email = email, type = Type.Kakao, reviews = emptyList())
+                val fallbackUser = UserModel(email = email, type = Type.kakao, reviews = emptyList())
                 _currentUser = fallbackUser
                 saveUserToPrefs(context)
                 onComplete(fallbackUser)
