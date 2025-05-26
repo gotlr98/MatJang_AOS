@@ -66,6 +66,8 @@ class ReviewWrite : AppCompatActivity() {
         }
 
         val email = user.email
+        val type = user.type
+        val docID = "$email&$type"
         val review = Review(
             placeName = place.placeName,
             rate = rating,
@@ -75,7 +77,7 @@ class ReviewWrite : AppCompatActivity() {
         )
 
         val db = Firebase.firestore
-        val userRef = db.collection("users").document(email)
+        val userRef = db.collection("users").document(docID)
 
         // Firestore의 배열 필드에 review 추가
         userRef.update("reviews", com.google.firebase.firestore.FieldValue.arrayUnion(review))

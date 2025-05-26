@@ -6,9 +6,12 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.AdapterView
+import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.FrameLayout
 import android.widget.ImageButton
+import android.widget.Spinner
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
@@ -66,6 +69,10 @@ class MainMap : AppCompatActivity() {
     private lateinit var drawerLayout: DrawerLayout
     private lateinit var navigationView: NavigationView
 
+    private lateinit var kakaoMap: KakaoMap
+
+    private var mapMode: String = "BROWSE"
+
     val retrofit = Retrofit.Builder()
         .baseUrl("https://dapi.kakao.com/")  // 카카오 API의 베이스 URL
         .addConverterFactory(GsonConverterFactory.create())  // Gson을 이용해 JSON을 객체로 변환
@@ -95,6 +102,80 @@ class MainMap : AppCompatActivity() {
         menuButton.setOnClickListener {
             drawerLayout.openDrawer(GravityCompat.START)
         }
+
+        val modeSpinner = findViewById<Spinner>(R.id.map_mode_spinner)
+        val adapter = ArrayAdapter.createFromResource(
+            this,
+            R.array.map_modes, // res/values/strings.xml 에 정의된 배열
+            android.R.layout.simple_spinner_item
+        )
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        modeSpinner.adapter = adapter
+        modeSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: AdapterView<*>, view: View?, position: Int, id: Long) {
+                mapMode = if (position == 0) "BROWSE" else "FIND_MATJIP"
+                Log.d("MapMode", "Selected mode: $mapMode")
+
+                if (::kakaoMap.isInitialized) {
+                    val curLatLng = LatLng.from(
+                        kakaoMap.cameraPosition!!.position.latitude,
+                        kakaoMap.cameraPosition!!.position.longitude
+                    )
+
+                    val loadLayer = kakaoMap.labelManager?.getLodLayer()
+                    loadLayer?.removeAll()
+
+                    if (mapMode == "FIND_MATJIP") {
+                        // 1️⃣ 맵 움직임 리스너 재등록
+                        kakaoMap.setOnCameraMoveEndListener { _, position, _ ->
+                            val latLng = LatLng.from(position.position.latitude, position.position.longitude)
+
+                            val innerLoadLayer = kakaoMap.labelManager?.getLodLayer()
+                            innerLoadLayer?.removeAll()
+
+                            searchPlacesByCategory(latLng) { places ->
+                                val labelStyles = LabelStyles.from(LabelStyle.from(R.drawable.marker))
+                                val options = mutableListOf<LabelOptions>()
+
+                                places?.forEach { place ->
+                                    val p = LatLng.from(place.latitude, place.longitude)
+                                    val labelOptions = LabelOptions.from(p)
+                                        .setStyles(labelStyles)
+                                        .setTag(place)
+                                    options.add(labelOptions)
+                                }
+
+                                innerLoadLayer?.addLodLabels(options)
+                            }
+                        }
+
+                        // 2️⃣ 초기 라벨 세팅도 해줌 (지도 안 움직이고도 보이게)
+                        searchPlacesByCategory(curLatLng) { places ->
+                            val labelStyles = LabelStyles.from(LabelStyle.from(R.drawable.marker))
+                            val options = mutableListOf<LabelOptions>()
+
+                            places?.forEach { place ->
+                                val p = LatLng.from(place.latitude, place.longitude)
+                                val labelOptions = LabelOptions.from(p)
+                                    .setStyles(labelStyles)
+                                    .setTag(place)
+                                options.add(labelOptions)
+                            }
+
+                            loadLayer?.addLodLabels(options)
+                        }
+                    } else {
+                        // 모드가 BROWSE면 리스너 제거
+                        kakaoMap.setOnCameraMoveEndListener(null)
+                    }
+                }
+            }
+
+            override fun onNothingSelected(parent: AdapterView<*>) {}
+        }
+
+
+
 
         val pref by lazy { getSharedPreferences("signIn", Context.MODE_PRIVATE) }
 
@@ -139,52 +220,58 @@ class MainMap : AppCompatActivity() {
         // KakaoMapReadyCallback 객체 생성
         val readyCallback = object : KakaoMapReadyCallback() {
             override fun onMapReady(map: KakaoMap) {
+
+                kakaoMap = map
                 // 지도 준비 완료 시 호출
                 Log.d("KakaoMap", "Map is ready!")
 
-                val labelManager = map.labelManager
+                val labelManager = kakaoMap.labelManager
                 val layer = labelManager?.getLayer()
                 layer?.removeAll()
 
-                map.setOnCameraMoveEndListener { kakaoMap, position, gestureType ->
-                    // position 파라미터를 이용해서 원하는 작업을 수행
+                if(mapMode == "FIND_MATJIP"){
+                    kakaoMap.setOnCameraMoveEndListener { map, position, gestureType ->
+                        // position 파라미터를 이용해서 원하는 작업을 수행
 
 
-                    val curLatLng = LatLng.from(position.position.latitude, position.position.longitude)
+                        val curLatLng = LatLng.from(position.position.latitude, position.position.longitude)
 
-                    val labelStyles = LabelStyles.from(LabelStyle.from(R.drawable.marker))
-                    var options = mutableListOf<LabelOptions>()
+                        val labelStyles = LabelStyles.from(LabelStyle.from(R.drawable.marker))
+                        var options = mutableListOf<LabelOptions>()
 
 
-                    val load_layer = kakaoMap.labelManager?.getLodLayer()
-                    load_layer?.removeAll()
+                        val load_layer = map.labelManager?.getLodLayer()
+                        load_layer?.removeAll()
 
-                    searchPlacesByCategory(curLatLng) { places ->
-                        places?.forEach {place ->
+                        searchPlacesByCategory(curLatLng) { places ->
+                            places?.forEach {place ->
 
-                            Log.d("place_information", "${place.placeName} ${place.latitude.toString()} ${place.longitude.toString()}")
+                                Log.d("place_information", "${place.placeName} ${place.latitude.toString()} ${place.longitude.toString()}")
 
-                            val tempLatLng = LatLng.from(place.latitude, place.longitude)
-                            val labelOptoins = LabelOptions.from(tempLatLng).setStyles(labelStyles).setTag(place)
-                            options.add(labelOptoins)
+                                val tempLatLng = LatLng.from(place.latitude, place.longitude)
+                                val labelOptoins = LabelOptions.from(tempLatLng).setStyles(labelStyles).setTag(place)
+                                options.add(labelOptoins)
+                            }
+                            load_layer?.addLodLabels(options)
+
                         }
-                        load_layer?.addLodLabels(options)
+
+                        map.setOnLodLabelClickListener { kakaoMap, layer, label ->
+                            val tag = label.tag
+                            if (tag is Matjip) {
+                                showPlaceDetailDialog(tag)
+
+                            } else {
+                                Log.e("LOD_CLICK", "Tag is not Matjip or is null: $tag")
+                            }
+                            true
+                        }
+
 
                     }
-
-                    kakaoMap.setOnLodLabelClickListener { kakaoMap, layer, label ->
-                        val tag = label.tag
-                        if (tag is Matjip) {
-                            showPlaceDetailDialog(tag)
-
-                        } else {
-                            Log.e("LOD_CLICK", "Tag is not Matjip or is null: $tag")
-                        }
-                        true
-                    }
-
-
                 }
+
+
 
             }
         }
