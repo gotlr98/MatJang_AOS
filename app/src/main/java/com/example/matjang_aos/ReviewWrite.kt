@@ -78,6 +78,8 @@ class ReviewWrite : AppCompatActivity() {
 
         val db = Firebase.firestore
         val userRef = db.collection("users").document(docID)
+        val userReviewRef = userRef.collection("review").document(place.placeName)
+
 
         // Firestore의 배열 필드에 review 추가
         userRef.update("reviews", com.google.firebase.firestore.FieldValue.arrayUnion(review))
@@ -94,6 +96,37 @@ class ReviewWrite : AppCompatActivity() {
             .addOnFailureListener { e ->
                 Toast.makeText(this, "리뷰 저장 실패", Toast.LENGTH_SHORT).show()
                 Log.e("Firestore", "리뷰 저장 실패", e)
+            }
+
+        userReviewRef.set(review)
+            .addOnSuccessListener {
+                // 2. 루트 review 컬렉션에도 저장
+                val placeReviewRef = db.collection("review").document(place.placeName)
+                    .collection("userReviews").document(email)
+
+                placeReviewRef.set(review)
+                    .addOnSuccessListener {
+                        // UserManager 업데이트
+                        val updatedUser = user.copy(reviews = user.reviews + review)
+                        UserManager.login(updatedUser)
+                        UserManager.saveUserToPrefs(this)
+
+                        Toast.makeText(this, "리뷰가 등록되었습니다.", Toast.LENGTH_SHORT).show()
+
+                        // MainMap 이동
+                        val intent = Intent(this, MainMap::class.java)
+                        intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
+                        startActivity(intent)
+                        finish()
+                    }
+                    .addOnFailureListener { e ->
+                        Toast.makeText(this, "리뷰 저장 실패 (리뷰 루트)", Toast.LENGTH_SHORT).show()
+                        Log.e("Firestore", "루트 리뷰 저장 실패", e)
+                    }
+            }
+            .addOnFailureListener { e ->
+                Toast.makeText(this, "리뷰 저장 실패 (유저 리뷰)", Toast.LENGTH_SHORT).show()
+                Log.e("Firestore", "유저 리뷰 저장 실패", e)
             }
     }
 }
