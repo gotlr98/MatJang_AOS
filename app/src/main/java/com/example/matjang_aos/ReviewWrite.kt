@@ -65,48 +65,28 @@ class ReviewWrite : AppCompatActivity() {
             return
         }
 
-        val email = user.email
-        val type = user.type
-        val docID = "$email&$type"
+        val emailWithType = "${user.email}&${user.type}"
         val review = Review(
             placeName = place.placeName,
             rate = rating,
             comment = comment,
-            user_email = email,
+            user_email = emailWithType,
             address = place.address ?: ""
         )
 
         val db = Firebase.firestore
-        val userRef = db.collection("users").document(docID)
-        val userReviewRef = userRef.collection("review").document(place.placeName)
+        val userRef = db.collection("users").document(emailWithType)
+        val placeReviewRef = db.collection("review")
+            .document(place.placeName.replace("/", "_")) // 슬래시 방지
+            .collection("userReviews")
+            .document(emailWithType)
 
-
-        // Firestore의 배열 필드에 review 추가
-        userRef.update("reviews", com.google.firebase.firestore.FieldValue.arrayUnion(review))
+        // 1. 리뷰 저장: place → review/placeName/userReviews/{emailWithType}
+        placeReviewRef.set(review)
             .addOnSuccessListener {
-                val updatedUser = user.copy(reviews = user.reviews + review)
-                UserManager.login(updatedUser)
-                UserManager.saveUserToPrefs(this)
-
-                val intent = Intent(this, MainMap::class.java)
-                intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
-                startActivity(intent)
-                finish()
-            }
-            .addOnFailureListener { e ->
-                Toast.makeText(this, "리뷰 저장 실패", Toast.LENGTH_SHORT).show()
-                Log.e("Firestore", "리뷰 저장 실패", e)
-            }
-
-        userReviewRef.set(review)
-            .addOnSuccessListener {
-                // 2. 루트 review 컬렉션에도 저장
-                val placeReviewRef = db.collection("review").document(place.placeName)
-                    .collection("userReviews").document(email)
-
-                placeReviewRef.set(review)
+                // 2. 유저 정보에 리뷰 배열 추가
+                userRef.update("reviews", com.google.firebase.firestore.FieldValue.arrayUnion(review))
                     .addOnSuccessListener {
-                        // UserManager 업데이트
                         val updatedUser = user.copy(reviews = user.reviews + review)
                         UserManager.login(updatedUser)
                         UserManager.saveUserToPrefs(this)
@@ -120,13 +100,14 @@ class ReviewWrite : AppCompatActivity() {
                         finish()
                     }
                     .addOnFailureListener { e ->
-                        Toast.makeText(this, "리뷰 저장 실패 (리뷰 루트)", Toast.LENGTH_SHORT).show()
-                        Log.e("Firestore", "루트 리뷰 저장 실패", e)
+                        Toast.makeText(this, "유저 리뷰 배열 업데이트 실패", Toast.LENGTH_SHORT).show()
+                        Log.e("Firestore", "유저 배열 저장 실패", e)
                     }
             }
             .addOnFailureListener { e ->
-                Toast.makeText(this, "리뷰 저장 실패 (유저 리뷰)", Toast.LENGTH_SHORT).show()
-                Log.e("Firestore", "유저 리뷰 저장 실패", e)
+                Toast.makeText(this, "리뷰 저장 실패", Toast.LENGTH_SHORT).show()
+                Log.e("Firestore", "리뷰 저장 실패", e)
             }
     }
+
 }

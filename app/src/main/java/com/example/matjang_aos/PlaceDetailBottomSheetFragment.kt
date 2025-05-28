@@ -56,8 +56,14 @@ class PlaceDetailBottomSheetFragment(private val place: Matjip) : BottomSheetDia
                 return@setOnClickListener
             }
 
-            val placeName = place.placeName
-            ReviewUtil.checkIfUserReviewed(userEmail, placeName) { hasReviewed ->
+            val user = UserManager.currentUser
+            if (user == null || user.email.isNullOrBlank()) {
+                Toast.makeText(requireContext(), "로그인 정보가 없습니다.", Toast.LENGTH_SHORT).show()
+                dismiss()
+                return@setOnClickListener
+            }
+
+            ReviewUtil.checkIfUserReviewed(user.email, user.type.name, place.placeName) { hasReviewed ->
                 val intent = if (hasReviewed) {
                     Intent(requireContext(), ReviewDetail::class.java).apply {
                         putExtra("place", place)
@@ -70,6 +76,7 @@ class PlaceDetailBottomSheetFragment(private val place: Matjip) : BottomSheetDia
                 startActivity(intent)
                 dismiss()
             }
+
         }
 
         // ✅ 북마크 버튼 클릭 시 유저 정보 없으면 처리

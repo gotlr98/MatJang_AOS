@@ -1,82 +1,63 @@
 package com.example.matjang_aos
 
 import android.os.Bundle
-import android.util.Log
-import android.widget.TextView
 import android.widget.Toast
-import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
-import com.google.firebase.Firebase
-import com.google.firebase.firestore.firestore
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import com.google.firebase.firestore.ktx.firestore
+import com.google.firebase.ktx.Firebase
 
 class ReviewDetail : AppCompatActivity() {
-    private lateinit var placeNameTextView: TextView
-    private lateinit var addressTextView: TextView
-    private lateinit var rateTextView: TextView
-    private lateinit var reviewTextView: TextView
+
+    private lateinit var reviewRecyclerView: RecyclerView
+    private lateinit var adapter: ReviewAdapter
+    private val reviewList = mutableListOf<Review>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_review_detail)
 
-        // View 연결
-        placeNameTextView = findViewById(R.id.place_name)
-        addressTextView = findViewById(R.id.address)
-        rateTextView = findViewById(R.id.rate)
-        reviewTextView = findViewById(R.id.review)
+        reviewRecyclerView = findViewById(R.id.reviewRecyclerView)
+        adapter = ReviewAdapter(reviewList)
 
-        // Intent로부터 Matjip 객체 가져오기
+        reviewRecyclerView.layoutManager = LinearLayoutManager(this)
+        reviewRecyclerView.adapter = adapter
+
         val place = intent.getSerializableExtra("place") as? Matjip
-
         if (place == null) {
             Toast.makeText(this, "장소 정보가 없습니다.", Toast.LENGTH_SHORT).show()
             finish()
             return
         }
 
-        placeNameTextView.text = place.placeName
-        addressTextView.text = place.address
-
-        val userEmail = UserManager.currentUser?.email
-        if (userEmail != null) {
-            loadAllReviews(place.placeName)
-
-        } else {
-            Toast.makeText(this, "로그인 정보가 없습니다.", Toast.LENGTH_SHORT).show()
-        }
+        fetchReviews(place.placeName)
     }
 
-    private fun loadAllReviews(placeName: String) {
-        val db = Firebase.firestore
+    private fun fetchReviews(placeName: String) {
         val sanitizedPlaceName = placeName.replace("/", "_")
+        val db = Firebase.firestore
 
         db.collection("review")
             .document(sanitizedPlaceName)
-            .collection("users")  // 모든 사용자 리뷰
+            .collection("userReviews")
             .get()
             .addOnSuccessListener { documents ->
-                if (documents.isEmpty) {
-                    Toast.makeText(this, "작성된 리뷰가 없습니다.", Toast.LENGTH_SHORT).show()
-                    return@addOnSuccessListener
-                }
+                reviewList.clear()
 
-                val stringBuilder = StringBuilder()
                 for (doc in documents) {
-                    val rate = doc.getDouble("rate") ?: 0.0
-                    val comment = doc.getString("comment") ?: "내용 없음"
-                    val user = doc.getString("user_email") ?: "익명"
-
-                    stringBuilder.append("👤 $user\n⭐ $rate\n📝 $comment\n\n")
+                    val review = doc.toObject(Review::class.java)
+                    reviewList.add(review)
                 }
 
-                reviewTextView.text = stringBuilder.toString()
+                if (reviewList.isEmpty()) {
+                    Toast.makeText(this, "작성된 리뷰가 없습니다.", Toast.LENGTH_SHORT).show()
+                }
+
+                adapter.notifyDataSetChanged()
             }
             .addOnFailureListener {
                 Toast.makeText(this, "리뷰 불러오기 실패", Toast.LENGTH_SHORT).show()
-                Log.e("ReviewDetail", "리뷰 로딩 실패: ${it.message}")
             }
     }
-
 }
