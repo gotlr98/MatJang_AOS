@@ -14,6 +14,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import com.example.matjang_aos.databinding.FragmentPlaceDetailBottomSheetBinding
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
+import com.google.firebase.firestore.SetOptions
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 
@@ -21,6 +22,8 @@ class PlaceDetailBottomSheetFragment(private val place: Matjip) : BottomSheetDia
 
     private var _binding: FragmentPlaceDetailBottomSheetBinding? = null
     private val binding get() = _binding!!
+
+    private var isBookmarked = false
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -46,6 +49,8 @@ class PlaceDetailBottomSheetFragment(private val place: Matjip) : BottomSheetDia
     private fun setupUI() {
         binding.placeName.text = place.placeName
         binding.address.text = place.address
+
+        updateBookmarkIcon()
 
         // ✅ 장소 클릭 시 리뷰 확인 및 이동
         binding.root.setOnClickListener {
@@ -92,6 +97,15 @@ class PlaceDetailBottomSheetFragment(private val place: Matjip) : BottomSheetDia
         }
     }
 
+    private fun updateBookmarkIcon() {
+        val iconRes = if (isBookmarked) {
+            R.drawable.bookmark // 북마크 된 상태 아이콘
+        } else {
+            R.drawable.bookmark_border // 북마크 안된 상태 아이콘
+        }
+        binding.bookmarkButton.setImageResource(iconRes)
+    }
+
 
     override fun onDestroyView() {
         super.onDestroyView()
@@ -131,12 +145,14 @@ class PlaceDetailBottomSheetFragment(private val place: Matjip) : BottomSheetDia
         )
 
         db.collection("users")
-            .document("${user.email}&Kakao")
+            .document("${user.email}&kakao")
             .collection("bookmark")
             .document(groupName)
-            .update(place.placeName, placeData) // place_name을 필드로 추가
+            .set(mapOf(place.placeName to placeData), SetOptions.merge()) // 🔥 변경
             .addOnSuccessListener {
                 Toast.makeText(context, "북마크에 추가되었습니다", Toast.LENGTH_SHORT).show()
+                isBookmarked = true
+                updateBookmarkIcon()
             }
             .addOnFailureListener { e ->
                 Log.e("Bookmark", "북마크 추가 실패: ${e.message}")

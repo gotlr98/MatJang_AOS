@@ -95,7 +95,7 @@ class MainMap : AppCompatActivity() {
         }
 
         val email = getSharedPreferences("signIn", Context.MODE_PRIVATE).getString("email", "알 수 없음")
-        navigationView.getHeaderView(0).findViewById<TextView>(R.id.email_text).text = email
+        navigationView.getHeaderView(0).findViewById<TextView>(R.id.email_text).text = "안녕하세요 \n $email 님"
 
         navigationView.setNavigationItemSelectedListener { menuItem ->
             when (menuItem.itemId) {
