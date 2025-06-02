@@ -50,6 +50,11 @@ class MainMap : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main_map)
 
+        intent.getStringExtra("mapType")?.let {
+            mapMode = it
+            Log.d("MapMode", "Restored map mode from intent: $mapMode")
+        }
+
         UserManager.loadUserFromPrefs(this)
         if (UserManager.currentUser == null) {
             Toast.makeText(this, "로그인 정보가 없습니다.", Toast.LENGTH_SHORT).show()

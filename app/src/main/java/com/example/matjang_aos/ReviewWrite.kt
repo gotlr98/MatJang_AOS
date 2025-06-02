@@ -96,6 +96,7 @@ class ReviewWrite : AppCompatActivity() {
                         // MainMap 이동
                         val intent = Intent(this, MainMap::class.java)
                         intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
+                        intent.putExtra("mapType", "FIND_MATJIP")
                         startActivity(intent)
                         finish()
                     }
