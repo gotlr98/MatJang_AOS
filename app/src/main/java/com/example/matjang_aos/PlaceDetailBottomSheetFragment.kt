@@ -41,10 +41,32 @@ class PlaceDetailBottomSheetFragment(private val place: Matjip) : BottomSheetDia
         val addressTextView: TextView = view.findViewById(R.id.address)
 
         _binding = FragmentPlaceDetailBottomSheetBinding.inflate(inflater, container, false)
-        setupUI() // ✅ 이 위치 중요!
+
+        checkBookmarkStatus()
+        setupUI()
 
         return binding.root
     }
+
+    private fun checkBookmarkStatus() {
+        val user = UserManager.currentUser ?: return
+        val db = Firebase.firestore
+
+        db.collection("users")
+            .document("${user.email}&kakao")
+            .collection("bookmark")
+            .get()
+            .addOnSuccessListener { snapshot ->
+                for (doc in snapshot.documents) {
+                    if (doc.contains(place.placeName)) {
+                        isBookmarked = true
+                        break
+                    }
+                }
+                updateBookmarkIcon()
+            }
+    }
+
 
     private fun setupUI() {
         binding.placeName.text = place.placeName
@@ -93,9 +115,35 @@ class PlaceDetailBottomSheetFragment(private val place: Matjip) : BottomSheetDia
                 return@setOnClickListener
             }
 
-            showBookmarkDialog()
+            if (isBookmarked) {
+                Toast.makeText(requireContext(), "이미 북마크에 등록된 장소입니다.", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            // 아직 등록 안 된 경우
+            checkBookmarkGroupAndShowDialog()
         }
     }
+
+    private fun checkBookmarkGroupAndShowDialog() {
+        val user = UserManager.currentUser ?: return
+        val db = Firebase.firestore
+
+        db.collection("users")
+            .document("${user.email}&kakao")
+            .collection("bookmark")
+            .get()
+            .addOnSuccessListener { snapshot ->
+                if (snapshot.isEmpty) {
+                    // 그룹이 하나도 없는 경우: 새 그룹 생성 다이얼로그
+                    showBookmarkDialog()
+                } else {
+                    // 그룹이 있으니 선택 다이얼로그 보여줌
+                    showBookmarkGroupSelectionDialog()
+                }
+            }
+    }
+
 
     private fun updateBookmarkIcon() {
         val iconRes = if (isBookmarked) {
@@ -118,12 +166,15 @@ class PlaceDetailBottomSheetFragment(private val place: Matjip) : BottomSheetDia
         inputEditText.hint = "그룹 이름을 입력하세요"
 
         AlertDialog.Builder(context)
-            .setTitle("북마크 추가")
+            .setTitle("북마크 그룹 추가")
             .setView(inputEditText)
             .setPositiveButton("추가") { _, _ ->
                 val groupName = inputEditText.text.toString().trim()
                 if (groupName.isNotEmpty()) {
-                    savePlaceToBookmarkGroup(groupName)
+                    savePlaceToBookmarkGroup(groupName) {
+                        // 그룹 추가 후 다시 그룹 선택 다이얼로그로 전환
+                        showBookmarkGroupSelectionDialog()
+                    }
                 } else {
                     Toast.makeText(context, "그룹 이름을 입력해주세요", Toast.LENGTH_SHORT).show()
                 }
@@ -132,11 +183,80 @@ class PlaceDetailBottomSheetFragment(private val place: Matjip) : BottomSheetDia
             .show()
     }
 
-    private fun savePlaceToBookmarkGroup(groupName: String) {
+    private fun showBookmarkGroupSelectionDialog() {
         val user = UserManager.currentUser ?: return
         val db = Firebase.firestore
 
-        // 가게 정보
+        db.collection("users")
+            .document("${user.email}&kakao")
+            .collection("bookmark")
+            .get()
+            .addOnSuccessListener { result ->
+                val groupNames = result.documents.map { it.id }
+
+                val dialogBuilder = AlertDialog.Builder(requireContext())
+                dialogBuilder.setTitle("북마크 그룹 선택")
+
+                val groupArray = groupNames.toTypedArray()
+                dialogBuilder.setItems(groupArray) { _, which ->
+                    val selectedGroup = groupArray[which]
+                    savePlaceToBookmarkGroup(selectedGroup) // 선택한 그룹에 다시 저장
+                }
+
+                dialogBuilder.setPositiveButton("그룹 추가") { _, _ ->
+                    showBookmarkDialog() // 다시 그룹 추가 다이얼로그
+                }
+
+                dialogBuilder.setNegativeButton("취소", null)
+
+                dialogBuilder.show()
+            }
+    }
+
+
+
+    private fun showCreateGroupDialog() {
+        val context = requireContext()
+        val input = EditText(context)
+        input.hint = "새 그룹 이름 입력"
+
+        AlertDialog.Builder(context)
+            .setTitle("새 그룹 생성")
+            .setView(input)
+            .setPositiveButton("생성") { _, _ ->
+                val newGroupName = input.text.toString().trim()
+                if (newGroupName.isNotEmpty()) {
+                    createBookmarkGroup(newGroupName)
+                } else {
+                    Toast.makeText(context, "그룹 이름을 입력해주세요", Toast.LENGTH_SHORT).show()
+                }
+            }
+            .setNegativeButton("취소", null)
+            .show()
+    }
+
+    private fun createBookmarkGroup(groupName: String) {
+        val user = UserManager.currentUser ?: return
+        val db = Firebase.firestore
+
+        db.collection("users")
+            .document("${user.email}&kakao")
+            .collection("bookmark")
+            .document(groupName)
+            .set(mapOf("createdAt" to System.currentTimeMillis()))
+            .addOnSuccessListener {
+                Toast.makeText(context, "그룹이 생성되었습니다. 다시 북마크 버튼을 눌러 추가하세요.", Toast.LENGTH_SHORT).show()
+            }
+            .addOnFailureListener { e ->
+                Toast.makeText(context, "그룹 생성 실패: ${e.message}", Toast.LENGTH_SHORT).show()
+            }
+    }
+
+
+    private fun savePlaceToBookmarkGroup(groupName: String, onComplete: (() -> Unit)? = null) {
+        val user = UserManager.currentUser ?: return
+        val db = Firebase.firestore
+
         val placeData = mapOf(
             "address" to place.address,
             "category_name" to place.category,
@@ -148,17 +268,19 @@ class PlaceDetailBottomSheetFragment(private val place: Matjip) : BottomSheetDia
             .document("${user.email}&kakao")
             .collection("bookmark")
             .document(groupName)
-            .set(mapOf(place.placeName to placeData), SetOptions.merge()) // 🔥 변경
+            .set(mapOf(place.placeName to placeData), SetOptions.merge())
             .addOnSuccessListener {
                 Toast.makeText(context, "북마크에 추가되었습니다", Toast.LENGTH_SHORT).show()
                 isBookmarked = true
                 updateBookmarkIcon()
+                onComplete?.invoke() // ✅ 그룹 추가 후 콜백 실행
             }
             .addOnFailureListener { e ->
                 Log.e("Bookmark", "북마크 추가 실패: ${e.message}")
                 Toast.makeText(context, "실패: ${e.message}", Toast.LENGTH_SHORT).show()
             }
     }
+
 
 
 

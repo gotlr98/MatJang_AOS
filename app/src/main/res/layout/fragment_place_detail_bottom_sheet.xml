@@ -10,12 +10,14 @@
         android:id="@+id/place_name"
         android:text="Place Name"
         android:textSize="18sp"
+        android:lineSpacingExtra="4dp"
         android:layout_width="match_parent"
         android:layout_height="wrap_content" />
 
     <TextView
         android:id="@+id/address"
         android:text="Address"
+        android:lineSpacingExtra="12dp"
         android:layout_width="match_parent"
         android:layout_height="wrap_content" />
 
@@ -27,6 +29,4 @@
         android:contentDescription="Bookmark"
         android:src="@drawable/bookmark_border"/>
 
-
-    <!-- 추가적인 정보들을 여기에 넣으면 돼 -->
 </LinearLayout>
