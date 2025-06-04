@@ -1,6 +1,8 @@
 package com.example.matjang_aos
 
 import android.content.Context
+import android.content.Intent
+import android.icu.text.Transliterator
 import android.os.Bundle
 import android.util.Log
 import android.view.View
@@ -9,7 +11,9 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
 import com.google.android.material.navigation.NavigationView
+import com.google.firebase.firestore.FirebaseFirestore
 import com.kakao.vectormap.*
+import com.kakao.vectormap.camera.CameraUpdateFactory
 import com.kakao.vectormap.label.*
 import retrofit2.Call
 import retrofit2.Callback
@@ -38,6 +42,8 @@ class MainMap : AppCompatActivity() {
     private lateinit var navigationView: NavigationView
     private lateinit var kakaoMap: KakaoMap
     private var mapMode: String = "BROWSE"
+    private val db = FirebaseFirestore.getInstance()
+
 
     private val retrofit = Retrofit.Builder()
         .baseUrl("https://dapi.kakao.com/")
@@ -60,6 +66,21 @@ class MainMap : AppCompatActivity() {
             Toast.makeText(this, "로그인 정보가 없습니다.", Toast.LENGTH_SHORT).show()
             finish()
             return
+        }
+
+        intent.getStringExtra("bookmark_place_name")?.let { name ->
+            val x = intent.getDoubleExtra("bookmark_x", 0.0)
+            val y = intent.getDoubleExtra("bookmark_y", 0.0)
+            val place = Matjip(name, "", x, y, "")
+            val position = LatLng.from(y, x)
+            kakaoMap.moveCamera(CameraUpdateFactory.newCenterPosition(position))
+
+            val labelStyles = LabelStyles.from(LabelStyle.from(R.drawable.marker))
+            val labelOption = LabelOptions.from(position).setStyles(labelStyles).setTag(place)
+            kakaoMap.labelManager?.getLodLayer()?.removeAll()
+            kakaoMap.labelManager?.getLodLayer()?.addLodLabel(labelOption)
+
+            showPlaceDetailDialog(place)
         }
 
         setupUI()
@@ -97,13 +118,31 @@ class MainMap : AppCompatActivity() {
         val email = getSharedPreferences("signIn", Context.MODE_PRIVATE).getString("email", "알 수 없음")
         navigationView.getHeaderView(0).findViewById<TextView>(R.id.email_text).text = "안녕하세요 \n $email 님"
 
+        val profileIcon = navigationView.getHeaderView(0).findViewById<ImageView>(R.id.profile_icon)
+        profileIcon.setOnClickListener {
+            val intent = Intent(this, MyPage::class.java)
+            startActivity(intent)
+        }
+
+
+
         navigationView.setNavigationItemSelectedListener { menuItem ->
             when (menuItem.itemId) {
                 R.id.nav_settings -> Toast.makeText(this, "설정 클릭됨", Toast.LENGTH_SHORT).show()
                 R.id.nav_logout -> Toast.makeText(this, "로그아웃 클릭됨", Toast.LENGTH_SHORT).show()
+                R.id.nav_bookmarks -> {
+                    val intent = Intent(this, BookmarkList::class.java)
+                    startActivity(intent)
+                }
             }
             drawerLayout.closeDrawer(GravityCompat.START)
             true
+        }
+
+        val bookmarkContainer = navigationView.getHeaderView(0).findViewById(R.id.bookmark_container)
+        val bookmarkBtn = navigationView.getHeaderView(0).findViewById<Button>(R.id.bookmark_list_button)
+        bookmarkBtn.setOnClickListener {
+            loadBookmarks()
         }
     }
 
@@ -130,6 +169,62 @@ class MainMap : AppCompatActivity() {
                 }
             }
         })
+    }
+
+    private fun loadBookmarks() {
+        val email = getSharedPreferences("signIn", Context.MODE_PRIVATE).getString("email", null) ?: return
+        val userId = email + "&kakao"
+
+        db.collection("users").document(userId).collection("bookmark").get()
+            .addOnSuccessListener { documents ->
+                bookmarkContainer.removeAllViews()
+                for (group in documents) {
+                    val groupName = group.id
+                    val groupButton = Button(this).apply {
+                        text = groupName
+                        setOnClickListener {
+                            toggleBookmarkList(groupName)
+                        }
+                    }
+                    bookmarkContainer.addView(groupButton)
+
+                    val listLayout = LinearLayout(this).apply {
+                        orientation = LinearLayout.VERTICAL
+                        visibility = View.GONE
+                        tag = "list_$groupName"
+                    }
+                    bookmarkContainer.addView(listLayout)
+                }
+            }
+    }
+
+    private fun toggleBookmarkList(groupName: String) {
+        val email = getSharedPreferences("signIn", Context.MODE_PRIVATE).getString("email", null) ?: return
+        val userId = email + "&kakao"
+        val listLayout = bookmarkContainer.findViewWithTag<LinearLayout>("list_$groupName")
+
+        if (listLayout.visibility == View.VISIBLE) {
+            listLayout.visibility = View.GONE
+            return
+        }
+
+        listLayout.removeAllViews()
+        listLayout.visibility = View.VISIBLE
+
+        db.collection("users").document(userId).collection("bookmark")
+            .document(groupName).get().addOnSuccessListener { document ->
+                for (place in document.data?.keys.orEmpty()) {
+                    val matjipData = document.get(place)
+                    if (matjipData is Map<*, *>) {
+                        val matjip = Matjip.fromMap(matjipData)
+                        val placeButton = Button(this).apply {
+                            text = matjip.place_name
+                            setOnClickListener { moveToPlace(matjip) }
+                        }
+                        listLayout.addView(placeButton)
+                    }
+                }
+            }
     }
 
     private fun handleMapModeChange() {
@@ -207,6 +302,26 @@ class MainMap : AppCompatActivity() {
         super.onDestroy()
         mapView.pause()
     }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+
+        if (requestCode == 1001 && resultCode == RESULT_OK) {
+            val matjip = data?.getSerializableExtra("matjip") as? Matjip ?: return
+            moveToPlace(matjip)
+        }
+    }
+
+    private fun moveToPlace(matjip: Matjip) {
+        val latLng = LatLng.from(matjip.latitude, matjip.longitude)
+        kakaoMap.moveCamera(CameraUpdateFactory.newCenterPosition(latLng))
+
+        kakaoMap.labelManager?.getLodLayer()?.addLodLabel(
+            LabelOptions.from(latLng).setStyles(LabelStyles.from(LabelStyle.from(R.drawable.marker))).setTag(matjip)
+        )
+        showPlaceDetailDialog(matjip)
+    }
+
 
     fun searchPlacesByCategory(latlng: LatLng, onResult: (List<Matjip>?) -> Unit) {
         val apiKey = "KakaoAK ${BuildConfig.KAKAO_REST_API_KEY}"

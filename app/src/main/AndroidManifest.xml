@@ -28,6 +28,12 @@
         android:theme="@style/Theme.Matjang_AOS"
         tools:targetApi="31">
         <activity
+            android:name=".BookmarkList"
+            android:exported="false" />
+        <activity
+            android:name=".MyPage"
+            android:exported="false" />
+        <activity
             android:name=".ReviewDetail"
             android:exported="false" />
         <activity

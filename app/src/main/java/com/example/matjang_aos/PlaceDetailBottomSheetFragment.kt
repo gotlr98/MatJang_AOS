@@ -213,46 +213,6 @@ class PlaceDetailBottomSheetFragment(private val place: Matjip) : BottomSheetDia
             }
     }
 
-
-
-    private fun showCreateGroupDialog() {
-        val context = requireContext()
-        val input = EditText(context)
-        input.hint = "새 그룹 이름 입력"
-
-        AlertDialog.Builder(context)
-            .setTitle("새 그룹 생성")
-            .setView(input)
-            .setPositiveButton("생성") { _, _ ->
-                val newGroupName = input.text.toString().trim()
-                if (newGroupName.isNotEmpty()) {
-                    createBookmarkGroup(newGroupName)
-                } else {
-                    Toast.makeText(context, "그룹 이름을 입력해주세요", Toast.LENGTH_SHORT).show()
-                }
-            }
-            .setNegativeButton("취소", null)
-            .show()
-    }
-
-    private fun createBookmarkGroup(groupName: String) {
-        val user = UserManager.currentUser ?: return
-        val db = Firebase.firestore
-
-        db.collection("users")
-            .document("${user.email}&kakao")
-            .collection("bookmark")
-            .document(groupName)
-            .set(mapOf("createdAt" to System.currentTimeMillis()))
-            .addOnSuccessListener {
-                Toast.makeText(context, "그룹이 생성되었습니다. 다시 북마크 버튼을 눌러 추가하세요.", Toast.LENGTH_SHORT).show()
-            }
-            .addOnFailureListener { e ->
-                Toast.makeText(context, "그룹 생성 실패: ${e.message}", Toast.LENGTH_SHORT).show()
-            }
-    }
-
-
     private fun savePlaceToBookmarkGroup(groupName: String, onComplete: (() -> Unit)? = null) {
         val user = UserManager.currentUser ?: return
         val db = Firebase.firestore
@@ -280,10 +240,5 @@ class PlaceDetailBottomSheetFragment(private val place: Matjip) : BottomSheetDia
                 Toast.makeText(context, "실패: ${e.message}", Toast.LENGTH_SHORT).show()
             }
     }
-
-
-
-
-
 
 }
