@@ -52,13 +52,19 @@ class PlaceDetailBottomSheetFragment(private val place: Matjip) : BottomSheetDia
         val user = UserManager.currentUser ?: return
         val db = Firebase.firestore
 
+        val placeName = place.placeName
+        if (placeName.isNullOrBlank()) {
+            Log.e("BookmarkCheck", "placeName is null or blank")
+            return
+        }
+
         db.collection("users")
             .document("${user.email}&kakao")
             .collection("bookmark")
             .get()
             .addOnSuccessListener { snapshot ->
                 for (doc in snapshot.documents) {
-                    if (doc.contains(place.placeName)) {
+                    if (doc.contains(placeName)) {
                         isBookmarked = true
                         break
                     }
@@ -66,6 +72,7 @@ class PlaceDetailBottomSheetFragment(private val place: Matjip) : BottomSheetDia
                 updateBookmarkIcon()
             }
     }
+
 
 
     private fun setupUI() {

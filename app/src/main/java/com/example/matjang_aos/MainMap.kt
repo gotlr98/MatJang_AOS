@@ -38,11 +38,13 @@ interface KakaoApiService {
 class MainMap : AppCompatActivity() {
 
     private lateinit var mapView: MapView
-    private lateinit var drawerLayout: DrawerLayout
+    private lateinit var bookmarkContainer: LinearLayout
     private lateinit var navigationView: NavigationView
     private lateinit var kakaoMap: KakaoMap
     private var mapMode: String = "BROWSE"
     private val db = FirebaseFirestore.getInstance()
+
+    private lateinit var drawerLayout: DrawerLayout
 
 
     private val retrofit = Retrofit.Builder()
@@ -139,7 +141,7 @@ class MainMap : AppCompatActivity() {
             true
         }
 
-        val bookmarkContainer = navigationView.getHeaderView(0).findViewById(R.id.bookmark_container)
+        bookmarkContainer = navigationView.getHeaderView(0).findViewById<LinearLayout>(R.id.bookmark_container)
         val bookmarkBtn = navigationView.getHeaderView(0).findViewById<Button>(R.id.bookmark_list_button)
         bookmarkBtn.setOnClickListener {
             loadBookmarks()
@@ -218,7 +220,7 @@ class MainMap : AppCompatActivity() {
                     if (matjipData is Map<*, *>) {
                         val matjip = Matjip.fromMap(matjipData)
                         val placeButton = Button(this).apply {
-                            text = matjip.place_name
+                            text = matjip.placeName
                             setOnClickListener { moveToPlace(matjip) }
                         }
                         listLayout.addView(placeButton)
