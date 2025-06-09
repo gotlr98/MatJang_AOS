@@ -76,7 +76,7 @@ class ReviewWrite : AppCompatActivity() {
 
         val db = Firebase.firestore
         val userRef = db.collection("users").document(emailWithType)
-        val placeReviewRef = db.collection("review")
+        val placeReviewRef = db.collection("reviews")
             .document(place.placeName.replace("/", "_")) // 슬래시 방지
             .collection("userReviews")
             .document(emailWithType)

@@ -128,8 +128,6 @@ class MainMap : AppCompatActivity() {
             startActivity(intent)
         }
 
-
-
 //        navigationView.setNavigationItemSelectedListener { menuItem ->
 //            when (menuItem.itemId) {
 //                R.id.nav_settings -> Toast.makeText(this, "설정 클릭됨", Toast.LENGTH_SHORT).show()
