@@ -5,6 +5,7 @@ import android.content.Intent
 import android.icu.text.Transliterator
 import android.os.Bundle
 import android.util.Log
+import android.view.MenuItem
 import android.view.View
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
@@ -95,6 +96,7 @@ class MainMap : AppCompatActivity() {
 
         findViewById<ImageButton>(R.id.menu_button).setOnClickListener {
             drawerLayout.openDrawer(GravityCompat.START)
+            loadBookmarks()
         }
 
         val modeSpinner = findViewById<Spinner>(R.id.map_mode_spinner)
@@ -128,24 +130,27 @@ class MainMap : AppCompatActivity() {
 
 
 
-        navigationView.setNavigationItemSelectedListener { menuItem ->
-            when (menuItem.itemId) {
-                R.id.nav_settings -> Toast.makeText(this, "설정 클릭됨", Toast.LENGTH_SHORT).show()
-                R.id.nav_logout -> Toast.makeText(this, "로그아웃 클릭됨", Toast.LENGTH_SHORT).show()
-                R.id.nav_bookmarks -> {
-                    val intent = Intent(this, BookmarkList::class.java)
-                    startActivity(intent)
-                }
-            }
-            drawerLayout.closeDrawer(GravityCompat.START)
-            true
-        }
+//        navigationView.setNavigationItemSelectedListener { menuItem ->
+//            when (menuItem.itemId) {
+//                R.id.nav_settings -> Toast.makeText(this, "설정 클릭됨", Toast.LENGTH_SHORT).show()
+//                R.id.nav_logout -> Toast.makeText(this, "로그아웃 클릭됨", Toast.LENGTH_SHORT).show()
+//                R.id.nav_bookmarks -> {
+//                    val intent = Intent(this, BookmarkList::class.java)
+//                    startActivity(intent)
+//                }
+//            }
+//            drawerLayout.closeDrawer(GravityCompat.START)
+//            true
+//        }
+
+//        bookmarkContainer = navigationView.getHeaderView(0).findViewById<LinearLayout>(R.id.bookmark_container)
+//        val bookmarkBtn = navigationView.getHeaderView(0).findViewById<Button>(R.id.bookmark_list_button)
+//        bookmarkBtn.setOnClickListener {
+//            loadBookmarks()
+//        }
 
         bookmarkContainer = navigationView.getHeaderView(0).findViewById<LinearLayout>(R.id.bookmark_container)
-        val bookmarkBtn = navigationView.getHeaderView(0).findViewById<Button>(R.id.bookmark_list_button)
-        bookmarkBtn.setOnClickListener {
-            loadBookmarks()
-        }
+
     }
 
     private fun setupMap() {
@@ -177,57 +182,72 @@ class MainMap : AppCompatActivity() {
         val email = getSharedPreferences("signIn", Context.MODE_PRIVATE).getString("email", null) ?: return
         val userId = email + "&kakao"
 
+        val menu = navigationView.menu
+        menu.clear() // 기존 북마크 그룹 메뉴 모두 삭제
+
         db.collection("users").document(userId).collection("bookmark").get()
             .addOnSuccessListener { documents ->
-                bookmarkContainer.removeAllViews()
                 for (group in documents) {
                     val groupName = group.id
-                    val groupButton = Button(this).apply {
-                        text = groupName
-                        setOnClickListener {
-                            toggleBookmarkList(groupName)
-                        }
-                    }
-                    bookmarkContainer.addView(groupButton)
 
-                    val listLayout = LinearLayout(this).apply {
-                        orientation = LinearLayout.VERTICAL
-                        visibility = View.GONE
-                        tag = "list_$groupName"
+                    // 북마크 그룹 추가 (groupName이 title)
+                    val groupMenuItem = menu.add(groupName)
+
+                    // 그룹 클릭 시 toggleBookmarkList 호출
+                    groupMenuItem.setOnMenuItemClickListener {
+                        toggleBookmarkList(groupName, groupMenuItem)
+                        true
                     }
-                    bookmarkContainer.addView(listLayout)
                 }
             }
     }
 
-    private fun toggleBookmarkList(groupName: String) {
+
+    private fun toggleBookmarkList(groupName: String, groupMenuItem: MenuItem) {
         val email = getSharedPreferences("signIn", Context.MODE_PRIVATE).getString("email", null) ?: return
         val userId = email + "&kakao"
-        val listLayout = bookmarkContainer.findViewWithTag<LinearLayout>("list_$groupName")
 
-        if (listLayout.visibility == View.VISIBLE) {
-            listLayout.visibility = View.GONE
+        val menu = navigationView.menu
+        val existingSubItems = mutableListOf<MenuItem>()
+
+        // 북마크 그룹 아래에 있는 기존 장소 아이템 찾기 (tag 형식으로 구분)
+        for (i in 0 until menu.size()) {
+            val item = menu.getItem(i)
+            if (item.title.toString().startsWith("• ") && item.intent?.action == groupName) {
+                existingSubItems.add(item)
+            }
+        }
+
+        // 있으면 삭제 → toggle 효과
+        if (existingSubItems.isNotEmpty()) {
+            existingSubItems.forEach { menu.removeItem(it.itemId) }
             return
         }
 
-        listLayout.removeAllViews()
-        listLayout.visibility = View.VISIBLE
-
+        // 없으면 추가
         db.collection("users").document(userId).collection("bookmark")
             .document(groupName).get().addOnSuccessListener { document ->
                 for (place in document.data?.keys.orEmpty()) {
                     val matjipData = document.get(place)
                     if (matjipData is Map<*, *>) {
-                        val matjip = Matjip.fromMap(matjipData)
-                        val placeButton = Button(this).apply {
-                            text = matjip.placeName
-                            setOnClickListener { moveToPlace(matjip) }
+                        val matjip = Matjip.fromMap(matjipData).copy(placeName = place)  // ★ 여기 수정 ★
+
+                        val placeMenuItem = menu.add("• ${matjip.placeName}")
+
+                        // intent action을 이용해 그룹 이름 표시 (삭제할 때 식별용)
+                        val intent = Intent().apply { action = groupName }
+                        placeMenuItem.intent = intent
+
+                        placeMenuItem.setOnMenuItemClickListener {
+                            moveToPlace(matjip)
+                            true
                         }
-                        listLayout.addView(placeButton)
                     }
                 }
             }
+
     }
+
 
     private fun handleMapModeChange() {
         if (!::kakaoMap.isInitialized) return

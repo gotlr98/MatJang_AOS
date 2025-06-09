@@ -75,6 +75,7 @@ class PlaceDetailBottomSheetFragment(private val place: Matjip) : BottomSheetDia
 
 
 
+
     private fun setupUI() {
         binding.placeName.text = place.placeName
         binding.address.text = place.address

@@ -32,13 +32,6 @@
     </LinearLayout>
 
     <!-- 북마크 버튼 -->
-    <Button
-        android:id="@+id/bookmark_list_button"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="북마크 목록 보기"
-        android:layout_marginTop="16dp"
-        android:textColor="@android:color/white" />
 
     <!-- 북마크 그룹 및 리스트가 동적으로 추가될 영역 -->
     <LinearLayout
