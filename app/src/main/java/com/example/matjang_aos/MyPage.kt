@@ -35,10 +35,6 @@ class MyPage : AppCompatActivity() {
 
         val docPath = "$email&$type"
 
-        Log.d("MyPage", "Loading reviews from docPath: $docPath")
-
-        Log.d("MyPage", "email=$email, type=$type")
-
 
 
         firestore.collection("users")

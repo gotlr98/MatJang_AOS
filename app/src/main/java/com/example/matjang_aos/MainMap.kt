@@ -34,6 +34,15 @@ interface KakaoApiService {
         @Query("y") latitude: Double,
         @Query("radius") radius: Int
     ): Call<CategorySearchResponse>
+
+    @GET("v2/local/search/keyword.json")
+    fun searchByKeyword(
+        @Header("Authorization") apiKey: String,
+        @Query("query") keyword: String,
+        @Query("x") longitude: Double,
+        @Query("y") latitude: Double,
+        @Query("radius") radius: Int = 5000
+    ): Call<CategorySearchResponse>
 }
 
 class MainMap : AppCompatActivity() {
@@ -88,7 +97,23 @@ class MainMap : AppCompatActivity() {
 
         setupUI()
         setupMap()
+        setupSearchBar()
     }
+
+    private fun setupSearchBar() {
+        val searchEditText = findViewById<EditText>(R.id.search_edit_text)
+        val searchButton = findViewById<ImageButton>(R.id.search_button)
+
+        searchButton.setOnClickListener {
+            val keyword = searchEditText.text.toString().trim()
+            if (keyword.isEmpty()) {
+                Toast.makeText(this, "검색어를 입력해주세요", Toast.LENGTH_SHORT).show()
+            } else {
+                searchPlacesByKeyword(keyword)
+            }
+        }
+    }
+
 
     private fun setupUI() {
         drawerLayout = findViewById(R.id.drawer_layout)
@@ -237,7 +262,18 @@ class MainMap : AppCompatActivity() {
                         placeMenuItem.intent = intent
 
                         placeMenuItem.setOnMenuItemClickListener {
-                            moveToPlace(matjip)
+                            drawerLayout.closeDrawer(GravityCompat.START)
+
+                            drawerLayout.addDrawerListener(object : DrawerLayout.DrawerListener {
+                                override fun onDrawerClosed(drawerView: View) {
+                                    moveToPlace(matjip)
+                                    drawerLayout.removeDrawerListener(this) // 리스너 중복 방지
+                                }
+
+                                override fun onDrawerSlide(drawerView: View, slideOffset: Float) {}
+                                override fun onDrawerOpened(drawerView: View) {}
+                                override fun onDrawerStateChanged(newState: Int) {}
+                            })
                             true
                         }
                     }
@@ -360,4 +396,38 @@ class MainMap : AppCompatActivity() {
                 }
             })
     }
+
+    private fun searchPlacesByKeyword(keyword: String) {
+        val apiKey = "KakaoAK ${BuildConfig.KAKAO_REST_API_KEY}"
+        val center = kakaoMap.cameraPosition?.position ?: return
+
+        apiService.searchByKeyword(apiKey, keyword, center.longitude, center.latitude)
+            .enqueue(object : Callback<CategorySearchResponse> {
+                override fun onResponse(call: Call<CategorySearchResponse>, response: Response<CategorySearchResponse>) {
+                    if (response.isSuccessful) {
+                        val results = response.body()?.documents ?: emptyList()
+                        showSearchResultsBottomSheet(results)
+                    } else {
+                        Toast.makeText(this@MainMap, "검색 실패", Toast.LENGTH_SHORT).show()
+                    }
+                }
+
+                override fun onFailure(call: Call<CategorySearchResponse>, t: Throwable) {
+                    Toast.makeText(this@MainMap, "에러 발생: ${t.message}", Toast.LENGTH_SHORT).show()
+                }
+            })
+    }
+
+    private fun showSearchResultsBottomSheet(results: List<Matjip>) {
+        if (results.isEmpty()) {
+            Toast.makeText(this, "검색 결과가 없습니다.", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val fragment = SearchResultBottomSheetFragment(results) { selectedMatjip ->
+            moveToPlace(selectedMatjip)
+        }
+        fragment.show(supportFragmentManager, "search_result")
+    }
+
 }
