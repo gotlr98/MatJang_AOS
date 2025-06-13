@@ -1,9 +1,11 @@
 package com.example.matjang_aos
 
 import android.content.Context
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
+import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
@@ -34,6 +36,12 @@ class MyPage : AppCompatActivity() {
         }
 
         val docPath = "$email&$type"
+
+        val followButton: ImageButton = findViewById(R.id.btn_add_follow)
+        followButton.setOnClickListener {
+            val intent = Intent(this, FindFollowerView::class.java)
+            startActivity(intent)
+        }
 
 
 

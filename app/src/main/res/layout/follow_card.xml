@@ -1,0 +1,39 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:padding="12dp"
+    android:background="@drawable/bg_card"
+    android:layout_marginBottom="8dp"
+    android:elevation="4dp">
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/user_email"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:layout_height="wrap_content"
+            android:layout_width="match_parent"
+            android:text="이메일" />
+
+        <TextView
+            android:id="@+id/review_count"
+            android:textSize="14sp"
+            android:layout_height="wrap_content"
+            android:layout_width="match_parent"
+            android:text="리뷰 0개" />
+    </LinearLayout>
+
+    <ImageButton
+        android:id="@+id/follow_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@drawable/ic_add_follow"
+        android:contentDescription="팔로우"
+        android:background="?attr/selectableItemBackgroundBorderless"/>
+</LinearLayout>
