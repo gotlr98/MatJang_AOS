@@ -48,17 +48,37 @@ class FindFollowerView : AppCompatActivity() {
     }
 
     private fun followUser(targetEmail: String) {
-        val targetDocPath = "$targetEmail&Kakao" // 필요 시 타입도 고려
-        val currentUserRef = firestore.collection("users").document(docPath)
-        val targetUserRef = firestore.collection("users").document(targetDocPath)
+        val usersRef = firestore.collection("users")
 
-        firestore.runBatch { batch ->
-            batch.update(currentUserRef, "following", FieldValue.arrayUnion(targetEmail))
-            batch.update(targetUserRef, "follower", FieldValue.arrayUnion(currentUserEmail))
-        }.addOnSuccessListener {
-            Toast.makeText(this, "$targetEmail 팔로우 완료!", Toast.LENGTH_SHORT).show()
-        }.addOnFailureListener {
-            Toast.makeText(this, "팔로우 실패: ${it.message}", Toast.LENGTH_SHORT).show()
-        }
+        // 1. 이메일이 일치하는 문서를 쿼리해서 타입 가져오기
+        usersRef.whereEqualTo("email", targetEmail)
+            .get()
+            .addOnSuccessListener { querySnapshot ->
+                if (querySnapshot.isEmpty) {
+                    Toast.makeText(this, "대상 유저 정보를 찾을 수 없습니다.", Toast.LENGTH_SHORT).show()
+                    return@addOnSuccessListener
+                }
+
+                val targetDoc = querySnapshot.documents[0]
+                val targetType = targetDoc.getString("type") ?: "kakao" // 기본값 "kakao"
+                val targetDocPath = "$targetEmail&$targetType"
+
+                val currentUserRef = usersRef.document(docPath)
+                val targetUserRef = usersRef.document(targetDocPath)
+
+                // 2. 팔로우 정보 업데이트 (batch 사용)
+                firestore.runBatch { batch ->
+                    batch.update(currentUserRef, "following", FieldValue.arrayUnion(targetEmail))
+                    batch.update(targetUserRef, "follower", FieldValue.arrayUnion(currentUserEmail))
+                }.addOnSuccessListener {
+                    Toast.makeText(this, "$targetEmail 팔로우 완료!", Toast.LENGTH_SHORT).show()
+                }.addOnFailureListener {
+                    Toast.makeText(this, "팔로우 실패: ${it.message}", Toast.LENGTH_SHORT).show()
+                }
+            }
+            .addOnFailureListener {
+                Toast.makeText(this, "유저 정보 조회 실패: ${it.message}", Toast.LENGTH_SHORT).show()
+            }
     }
+
 }

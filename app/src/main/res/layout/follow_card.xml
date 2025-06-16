@@ -3,7 +3,6 @@
     android:layout_height="wrap_content"
     android:orientation="horizontal"
     android:padding="12dp"
-    android:background="@drawable/bg_card"
     android:layout_marginBottom="8dp"
     android:elevation="4dp">
 
@@ -33,7 +32,7 @@
         android:id="@+id/follow_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:src="@drawable/ic_add_follow"
+        android:src="@drawable/ic_person_add"
         android:contentDescription="팔로우"
         android:background="?attr/selectableItemBackgroundBorderless"/>
 </LinearLayout>
