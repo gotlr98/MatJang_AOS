@@ -3,10 +3,12 @@ package com.example.matjang_aos
 import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
+import android.view.MenuItem
 import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
+import androidx.appcompat.widget.Toolbar
 import androidx.appcompat.app.AppCompatActivity
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
@@ -22,6 +24,11 @@ class MyPage : AppCompatActivity() {
 
         reviewContainer = findViewById(R.id.review_container)
         followingContainer = findViewById(R.id.following_container)
+
+        val toolbar = findViewById<Toolbar>(R.id.custom_toolbar)
+        setSupportActionBar(toolbar)
+        supportActionBar?.setDisplayHomeAsUpEnabled(true) // 뒤로가기 버튼
+        supportActionBar?.title = "마이페이지" // 툴바 제목
 
         val email = UserManager.currentUser?.email
         val type = UserManager.currentUser?.type
@@ -116,6 +123,16 @@ class MyPage : AppCompatActivity() {
             recreate()
         }.addOnFailureListener {
             Toast.makeText(this, "언팔로우 실패: ${it.message}", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        return when (item.itemId) {
+            android.R.id.home -> {
+                finish() // 현재 액티비티 종료 = 뒤로가기
+                true
+            }
+            else -> super.onOptionsItemSelected(item)
         }
     }
 }

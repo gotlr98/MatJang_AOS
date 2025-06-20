@@ -1,64 +1,78 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:padding="16dp">
+    android:layout_height="match_parent">
 
-    <!-- ScrollView 안의 하나뿐인 자식 LinearLayout -->
-    <LinearLayout
+    <include layout="@layout/toolbar" />
+
+    <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical">
+        android:layout_height="match_parent"
+        android:padding="16dp">
 
-        <!-- 팔로우 추가 버튼 -->
-        <ImageButton
-            android:id="@+id/btn_add_follow"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:src="@drawable/ic_person_add"
-            android:contentDescription="팔로우 추가"
-            android:layout_margin="16dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:layout_gravity="end"/>
 
-        <!-- 📌 내가 작성한 리뷰 텍스트 -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="📌 내가 작성한 리뷰"
-            android:textSize="18sp"
-            android:layout_marginBottom="8dp"
-            android:textStyle="bold" />
 
-        <!-- 리뷰 컨테이너 -->
+        <!-- ScrollView 안의 하나뿐인 자식 LinearLayout -->
         <LinearLayout
-            android:id="@+id/review_container"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:divider="@android:color/transparent"
-            android:showDividers="middle"
-            android:dividerPadding="8dp" />
+            android:orientation="vertical">
 
-        <!-- 👥 팔로잉 목록 텍스트 -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="👥 팔로잉 목록"
-            android:textSize="18sp"
-            android:layout_marginTop="24dp"
-            android:layout_marginBottom="8dp"
-            android:textStyle="bold" />
+            <!-- 팔로우 추가 버튼 -->
+            <ImageButton
+                android:id="@+id/btn_add_follow"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:src="@drawable/ic_person_add"
+                android:contentDescription="팔로우 추가"
+                android:layout_margin="16dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:layout_gravity="end"/>
 
-        <!-- 팔로잉 컨테이너 -->
-        <LinearLayout
-            android:id="@+id/following_container"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:divider="@android:color/transparent"
-            android:showDividers="middle"
-            android:dividerPadding="8dp" />
+            <!-- 📌 내가 작성한 리뷰 텍스트 -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="📌 내가 작성한 리뷰"
+                android:textSize="18sp"
+                android:layout_marginBottom="8dp"
+                android:textStyle="bold" />
 
-    </LinearLayout>
-</ScrollView>
+            <!-- 리뷰 컨테이너 -->
+            <LinearLayout
+                android:id="@+id/review_container"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:divider="@android:color/transparent"
+                android:showDividers="middle"
+                android:dividerPadding="8dp" />
+
+            <!-- 👥 팔로잉 목록 텍스트 -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="👥 팔로잉 목록"
+                android:textSize="18sp"
+                android:layout_marginTop="24dp"
+                android:layout_marginBottom="8dp"
+                android:textStyle="bold" />
+
+            <!-- 팔로잉 컨테이너 -->
+            <LinearLayout
+                android:id="@+id/following_container"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:divider="@android:color/transparent"
+                android:showDividers="middle"
+                android:dividerPadding="8dp" />
+
+        </LinearLayout>
+    </ScrollView>
+
+</LinearLayout>
+

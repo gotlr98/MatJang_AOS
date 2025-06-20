@@ -1,10 +1,12 @@
 package com.example.matjang_aos
 
 import android.os.Bundle
+import android.view.MenuItem
 import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
+import androidx.appcompat.widget.Toolbar
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
@@ -27,6 +29,10 @@ class FindFollowerView : AppCompatActivity() {
 
         container = findViewById(R.id.follower_container)
         swipeRefreshLayout = findViewById(R.id.swipeRefresh)
+
+        val toolbar = findViewById<Toolbar>(R.id.custom_toolbar)
+        setSupportActionBar(toolbar)
+        supportActionBar?.setDisplayHomeAsUpEnabled(true) // 뒤로가기 버튼
 
         swipeRefreshLayout.setOnRefreshListener {
             loadUsers()
@@ -129,5 +135,15 @@ class FindFollowerView : AppCompatActivity() {
             .addOnFailureListener {
                 Toast.makeText(this, "유저 정보 조회 실패: ${it.message}", Toast.LENGTH_SHORT).show()
             }
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        return when (item.itemId) {
+            android.R.id.home -> {
+                finish() // 현재 액티비티 종료 = 뒤로가기
+                true
+            }
+            else -> super.onOptionsItemSelected(item)
+        }
     }
 }
