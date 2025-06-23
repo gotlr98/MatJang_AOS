@@ -32,6 +32,16 @@
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:layout_gravity="end"/>
 
+            <Button
+                android:id="@+id/btn_delete_account"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="회원탈퇴"
+                android:layout_marginTop="16dp"
+                android:backgroundTint="@color/red"
+                android:textColor="@android:color/white"/>
+
+
             <!-- 📌 내가 작성한 리뷰 텍스트 -->
             <TextView
                 android:layout_width="wrap_content"

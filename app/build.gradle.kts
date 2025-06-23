@@ -36,11 +36,10 @@ android {
         buildConfigField("String", "KAKAO_REST_API_KEY", "\"${properties.getProperty("KAKAO_REST_API_KEY")}\"")
     }
 
-
-
     buildFeatures {
         viewBinding = true
         buildConfig = true
+        dataBinding = true
     }
 
 
