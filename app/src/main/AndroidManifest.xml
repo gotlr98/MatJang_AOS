@@ -43,7 +43,7 @@
             android:name=".ReviewWrite"
             android:exported="false" />
         <activity
-            android:name=".ActivityMainMapBinding"
+            android:name=".MainMapActivity"
             android:exported="false" />
         <activity
             android:name="com.kakao.sdk.auth.AuthCodeHandlerActivity"
@@ -61,7 +61,7 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".ActivitySignInViewBinding"
+            android:name=".SignInActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

@@ -26,7 +26,7 @@ import retrofit2.http.GET
 import retrofit2.http.Header
 import retrofit2.http.Query
 
-class ActivityMainMapBinding : AppCompatActivity() {
+class MainMapActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainMapBinding
     private lateinit var kakaoMap: KakaoMap
     private var mapMode: String = "BROWSE"
@@ -278,7 +278,7 @@ class ActivityMainMapBinding : AppCompatActivity() {
                 }
 
                 override fun onFailure(call: Call<CategorySearchResponse>, t: Throwable) {
-                    Toast.makeText(this@ActivityMainMapBinding, "검색 실패: ${t.localizedMessage}", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this@MainMapActivity, "검색 실패: ${t.localizedMessage}", Toast.LENGTH_SHORT).show()
                 }
             })
     }

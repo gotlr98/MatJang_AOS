@@ -12,9 +12,9 @@ import com.kakao.sdk.common.model.ClientError
 import com.kakao.sdk.common.model.ClientErrorCause
 import com.kakao.sdk.user.UserApiClient
 
-class ActivitySignInViewBinding : AppCompatActivity() {
+class SignInActivity : AppCompatActivity() {
 
-    private val TAG = "ActivitySignInViewBinding"
+    private val TAG = "SignInActivity"
     private lateinit var binding: ActivitySignInViewBinding
     private lateinit var signInPrefs: SharedPreferences
 
@@ -109,7 +109,7 @@ class ActivitySignInViewBinding : AppCompatActivity() {
     }
 
     private fun goToMainMap() {
-        startActivity(Intent(this, ActivityMainMapBinding::class.java))
+        startActivity(Intent(this, MainMapActivity::class.java))
         finish()
     }
 }

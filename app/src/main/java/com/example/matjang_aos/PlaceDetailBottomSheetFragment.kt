@@ -27,7 +27,6 @@ import com.google.firebase.ktx.Firebase
         setStyle(STYLE_NORMAL, R.style.BottomSheetDialogTheme)
     }
 
-    // 이 부분 추가 → 다이얼로그 배경 어둡게 하지 않음
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         val dialog = super.onCreateDialog(savedInstanceState)
         dialog.window?.setDimAmount(0f)
