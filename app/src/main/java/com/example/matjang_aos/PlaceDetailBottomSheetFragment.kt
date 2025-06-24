@@ -1,5 +1,6 @@
 package com.example.matjang_aos
 
+import android.app.Dialog
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
@@ -15,7 +16,7 @@ import com.google.firebase.firestore.SetOptions
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 
-class PlaceDetailBottomSheetFragment(private val place: Matjip) : BottomSheetDialogFragment() {
+    class PlaceDetailBottomSheetFragment(private val place: Matjip) : BottomSheetDialogFragment() {
 
     private var _binding: FragmentPlaceDetailBottomSheetBinding? = null
     private val binding get() = _binding!!
@@ -24,6 +25,20 @@ class PlaceDetailBottomSheetFragment(private val place: Matjip) : BottomSheetDia
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setStyle(STYLE_NORMAL, R.style.BottomSheetDialogTheme)
+    }
+
+    // 이 부분 추가 → 다이얼로그 배경 어둡게 하지 않음
+    override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
+        val dialog = super.onCreateDialog(savedInstanceState)
+        dialog.window?.setDimAmount(0f)
+        return dialog
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+
+        val bottomSheet = dialog?.findViewById<View>(com.google.android.material.R.id.design_bottom_sheet)
+        bottomSheet?.setBackgroundColor(android.graphics.Color.WHITE)
     }
 
     override fun onCreateView(

@@ -173,7 +173,7 @@ class MyPage : AppCompatActivity() {
             userDocRef.delete().addOnSuccessListener {
                 getSharedPreferences("autoLogin", Context.MODE_PRIVATE).edit().clear().apply()
                 Toast.makeText(this, "계정이 삭제되었습니다.", Toast.LENGTH_SHORT).show()
-                startActivity(Intent(this, SignInView::class.java).apply {
+                startActivity(Intent(this, ActivitySignInViewBinding::class.java).apply {
                     flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
                 })
                 finish()

@@ -14,7 +14,7 @@ import com.kakao.sdk.user.UserApiClient
 
 class ActivitySignInViewBinding : AppCompatActivity() {
 
-    private val TAG = "SignInView"
+    private val TAG = "ActivitySignInViewBinding"
     private lateinit var binding: ActivitySignInViewBinding
     private lateinit var signInPrefs: SharedPreferences
 
@@ -109,7 +109,7 @@ class ActivitySignInViewBinding : AppCompatActivity() {
     }
 
     private fun goToMainMap() {
-        startActivity(Intent(this, MainMap::class.java))
+        startActivity(Intent(this, ActivityMainMapBinding::class.java))
         finish()
     }
 }

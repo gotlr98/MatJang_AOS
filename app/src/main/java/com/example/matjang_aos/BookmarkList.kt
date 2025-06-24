@@ -44,7 +44,7 @@ class BookmarkList : AppCompatActivity() {
                                 adapter.notifyDataSetChanged()
                                 listView.setOnItemClickListener { _, _, position, _ ->
                                     val selectedName = bookmarkList[position]
-                                    val intent = Intent(this, MainMap::class.java)
+                                    val intent = Intent(this, ActivityMainMapBinding::class.java)
                                     intent.putExtra("bookmark_place_name", selectedName)
                                     intent.putExtra("bookmark_x", x)
                                     intent.putExtra("bookmark_y", y)

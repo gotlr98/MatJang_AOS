@@ -11,22 +11,22 @@ import android.widget.ArrayAdapter
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.GravityCompat
+import androidx.drawerlayout.widget.DrawerLayout
 import com.example.matjang_aos.databinding.ActivityMainMapBinding
-import com.google.android.material.navigation.NavigationView
 import com.google.firebase.firestore.FirebaseFirestore
 import com.kakao.vectormap.*
 import com.kakao.vectormap.camera.CameraUpdateFactory
-import com.kakao.vectormap.label.LabelOptions
-import com.kakao.vectormap.label.LabelStyle
-import com.kakao.vectormap.label.LabelStyles
-import retrofit2.*
+import com.kakao.vectormap.label.*
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
+import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.GET
 import retrofit2.http.Header
 import retrofit2.http.Query
 
-class MainMap : AppCompatActivity() {
-
+class ActivityMainMapBinding : AppCompatActivity() {
     private lateinit var binding: ActivityMainMapBinding
     private lateinit var kakaoMap: KakaoMap
     private var mapMode: String = "BROWSE"
@@ -88,23 +88,20 @@ class MainMap : AppCompatActivity() {
                 R.array.map_modes,
                 android.R.layout.simple_spinner_item
             ).also { it.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item) }
-
             onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
                 override fun onItemSelected(parent: AdapterView<*>, view: View?, position: Int, id: Long) {
                     mapMode = if (position == 0) "BROWSE" else "FIND_MATJIP"
                     handleMapModeChange()
                 }
-
                 override fun onNothingSelected(parent: AdapterView<*>) {}
             }
         }
 
         val email = getSharedPreferences("signIn", Context.MODE_PRIVATE).getString("email", "알 수 없음")
-        binding.navigationView.getHeaderView(0).apply {
-            findViewById<android.widget.TextView>(R.id.email_text).text = "안녕하세요 \n $email 님"
-            findViewById<android.widget.ImageView>(R.id.profile_icon).setOnClickListener {
-                startActivity(Intent(this@MainMap, MyPage::class.java))
-            }
+        val header = binding.navigationView.getHeaderView(0)
+        header.findViewById<android.widget.TextView>(R.id.email_text).text = "안녕하세요 \n $email 님"
+        header.findViewById<android.widget.ImageView>(R.id.profile_icon).setOnClickListener {
+            startActivity(Intent(this, MyPage::class.java))
         }
     }
 
@@ -150,7 +147,6 @@ class MainMap : AppCompatActivity() {
             } ?: emptyList()
             kakaoMap.labelManager?.getLodLayer()?.addLodLabels(options)
         }
-
         kakaoMap.setOnLodLabelClickListener { _, _, label ->
             (label.tag as? Matjip)?.let { showPlaceDetailDialog(it) }
             true
@@ -224,16 +220,18 @@ class MainMap : AppCompatActivity() {
                         item.intent = Intent().apply { action = groupName }
                         item.setOnMenuItemClickListener {
                             binding.drawerLayout.closeDrawer(GravityCompat.START)
-                            binding.drawerLayout.addDrawerListener(object : androidx.drawerlayout.widget.DrawerLayout.DrawerListener {
+
+                            val listener = object : DrawerLayout.DrawerListener {
                                 override fun onDrawerClosed(drawerView: View) {
                                     moveToPlace(matjip)
                                     binding.drawerLayout.removeDrawerListener(this)
                                 }
-
                                 override fun onDrawerSlide(drawerView: View, slideOffset: Float) {}
                                 override fun onDrawerOpened(drawerView: View) {}
                                 override fun onDrawerStateChanged(newState: Int) {}
-                            })
+                            }
+
+                            binding.drawerLayout.addDrawerListener(listener)
                             true
                         }
                     }
@@ -241,20 +239,9 @@ class MainMap : AppCompatActivity() {
             }
     }
 
-    override fun onResume() {
-        super.onResume()
-        binding.mapView.resume()
-    }
-
-    override fun onPause() {
-        super.onPause()
-        binding.mapView.pause()
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        binding.mapView.pause()
-    }
+    override fun onResume() { super.onResume(); binding.mapView.resume() }
+    override fun onPause() { super.onPause(); binding.mapView.pause() }
+    override fun onDestroy() { super.onDestroy(); binding.mapView.pause() }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
@@ -291,7 +278,7 @@ class MainMap : AppCompatActivity() {
                 }
 
                 override fun onFailure(call: Call<CategorySearchResponse>, t: Throwable) {
-                    Toast.makeText(this@MainMap, "검색 실패: ${t.localizedMessage}", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this@ActivityMainMapBinding, "검색 실패: ${t.localizedMessage}", Toast.LENGTH_SHORT).show()
                 }
             })
     }

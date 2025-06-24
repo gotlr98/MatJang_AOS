@@ -96,48 +96,16 @@
             android:visibility="gone"
             app:layout_constraintTop_toBottomOf="@id/search_bar_container"
             app:layout_constraintStart_toStartOf="parent" />
+
     </androidx.constraintlayout.widget.ConstraintLayout>
 
-    <!-- 커스텀 사이드 메뉴 -->
-    <LinearLayout
-        android:id="@+id/custom_drawer"
-        android:layout_width="280dp"
+    <!-- 사이드 네비게이션 메뉴 -->
+    <com.google.android.material.navigation.NavigationView
+        android:id="@+id/navigation_view"
+        android:layout_width="wrap_content"
         android:layout_height="match_parent"
         android:layout_gravity="start"
-        android:orientation="vertical"
-        android:background="@android:color/white">
-
-        <!-- 상단 헤더 -->
-        <include layout="@layout/nav_header" />
-
-        <!-- 기본 메뉴 버튼들 -->
-        <Button
-            android:id="@+id/my_review_button"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="내 리뷰 목록" />
-
-        <!-- 북마크 그룹들 컨테이너 -->
-        <ScrollView
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1"
-            android:fillViewport="true">
-
-            <LinearLayout
-                android:id="@+id/bookmark_group_container"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="8dp" />
-        </ScrollView>
-
-        <!-- 로그아웃 버튼 등 추가 가능 -->
-        <Button
-            android:id="@+id/logout_button"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="로그아웃" />
-    </LinearLayout>
+        app:headerLayout="@layout/nav_header"
+        app:menu="@menu/drawer_menu" />
 
 </androidx.drawerlayout.widget.DrawerLayout>

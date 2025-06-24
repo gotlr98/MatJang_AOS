@@ -94,7 +94,7 @@ class ReviewWrite : AppCompatActivity() {
                         Toast.makeText(this, "리뷰가 등록되었습니다.", Toast.LENGTH_SHORT).show()
 
                         // MainMap 이동
-                        val intent = Intent(this, MainMap::class.java)
+                        val intent = Intent(this, ActivityMainMapBinding::class.java)
                         intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
                         intent.putExtra("mapType", "FIND_MATJIP")
                         startActivity(intent)
