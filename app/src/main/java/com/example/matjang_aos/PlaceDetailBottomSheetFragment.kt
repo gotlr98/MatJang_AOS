@@ -62,7 +62,7 @@ import com.google.firebase.ktx.Firebase
             val user = UserManager.currentUser!!
             ReviewUtil.checkIfUserReviewed(user.email, user.type.name, place.placeName) { hasReviewed ->
                 val intent = Intent(requireContext(),
-                    if (hasReviewed) ReviewDetail::class.java else ReviewWrite::class.java
+                    if (hasReviewed) ReviewDetailActivity::class.java else ReviewWriteActivity::class.java
                 ).apply {
                     putExtra("place", place)
                 }

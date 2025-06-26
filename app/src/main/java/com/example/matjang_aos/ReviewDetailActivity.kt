@@ -4,25 +4,24 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
+import com.example.matjang_aos.databinding.ActivityReviewDetailBinding // ✅ ViewBinding import
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 
-class ReviewDetail : AppCompatActivity() {
+class ReviewDetailActivity : AppCompatActivity() {
 
-    private lateinit var reviewRecyclerView: RecyclerView
+    private lateinit var binding: ActivityReviewDetailBinding // ✅ ViewBinding 변수 선언
     private lateinit var adapter: ReviewAdapter
     private val reviewList = mutableListOf<Review>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_review_detail)
+        binding = ActivityReviewDetailBinding.inflate(layoutInflater) // ✅ ViewBinding 초기화
+        setContentView(binding.root) // ✅ 레이아웃 설정
 
-        reviewRecyclerView = findViewById(R.id.reviewRecyclerView)
         adapter = ReviewAdapter(reviewList)
-
-        reviewRecyclerView.layoutManager = LinearLayoutManager(this)
-        reviewRecyclerView.adapter = adapter
+        binding.reviewRecyclerView.layoutManager = LinearLayoutManager(this) // ✅ 바인딩된 뷰 사용
+        binding.reviewRecyclerView.adapter = adapter
 
         val place = intent.getSerializableExtra("place") as? Matjip
         if (place == null) {

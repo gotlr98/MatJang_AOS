@@ -37,10 +37,10 @@
             android:name=".MyPage"
             android:exported="false" />
         <activity
-            android:name=".ReviewDetail"
+            android:name=".ReviewDetailActivity"
             android:exported="false" />
         <activity
-            android:name=".ReviewWrite"
+            android:name=".ReviewWriteActivity"
             android:exported="false" />
         <activity
             android:name=".MainMapActivity"

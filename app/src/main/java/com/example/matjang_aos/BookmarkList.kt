@@ -4,54 +4,73 @@ import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.widget.ArrayAdapter
-import android.widget.ListView
-import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
-import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
+import com.example.matjang_aos.databinding.ActivityBookmarkListBinding
 import com.google.firebase.Firebase
 import com.google.firebase.firestore.firestore
 
 class BookmarkList : AppCompatActivity() {
-    private lateinit var listView: ListView
+
+    private lateinit var binding: ActivityBookmarkListBinding
     private lateinit var adapter: ArrayAdapter<String>
     private val bookmarkList = mutableListOf<String>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_bookmark_list)
+        binding = ActivityBookmarkListBinding.inflate(layoutInflater)
+        setContentView(binding.root)
 
-        listView = findViewById(R.id.bookmark_list_view)
+        setupListView()
+        fetchBookmarks()
+    }
+
+    private fun setupListView() {
         adapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, bookmarkList)
-        listView.adapter = adapter
+        binding.bookmarkListView.adapter = adapter
 
+        binding.bookmarkListView.setOnItemClickListener { _, _, position, _ ->
+            val selectedName = bookmarkList[position]
+            val email = getSharedPreferences("signIn", Context.MODE_PRIVATE).getString("email", "") ?: ""
+            val db = Firebase.firestore
+
+            db.collection("users").document("${email}&Kakao")
+                .collection("bookmark")
+                .get()
+                .addOnSuccessListener { groups ->
+                    for (group in groups) {
+                        group.reference.get()
+                            .addOnSuccessListener { groupDoc ->
+                                val placeMap = groupDoc.data ?: return@addOnSuccessListener
+                                val placeData = placeMap[selectedName] as? Map<*, *> ?: return@addOnSuccessListener
+                                val x = (placeData["x"] as? Number)?.toDouble() ?: return@addOnSuccessListener
+                                val y = (placeData["y"] as? Number)?.toDouble() ?: return@addOnSuccessListener
+
+                                val intent = Intent(this, MainMapActivity::class.java)
+                                intent.putExtra("bookmark_place_name", selectedName)
+                                intent.putExtra("bookmark_x", x)
+                                intent.putExtra("bookmark_y", y)
+                                startActivity(intent)
+                                return@addOnSuccessListener
+                            }
+                    }
+                }
+        }
+    }
+
+    private fun fetchBookmarks() {
         val email = getSharedPreferences("signIn", Context.MODE_PRIVATE).getString("email", "") ?: ""
         val db = Firebase.firestore
+
         db.collection("users").document("${email}&Kakao")
             .collection("bookmark")
             .get()
             .addOnSuccessListener { result ->
                 for (group in result) {
-                    group.reference.collection("places").get()
-                        .addOnSuccessListener { placeDocs ->
-                            for (doc in placeDocs) {
-                                val name = doc.id
-                                val x = doc.getDouble("x") ?: 0.0
-                                val y = doc.getDouble("y") ?: 0.0
-                                bookmarkList.add(name)
-                                adapter.notifyDataSetChanged()
-                                listView.setOnItemClickListener { _, _, position, _ ->
-                                    val selectedName = bookmarkList[position]
-                                    val intent = Intent(this, MainMapActivity::class.java)
-                                    intent.putExtra("bookmark_place_name", selectedName)
-                                    intent.putExtra("bookmark_x", x)
-                                    intent.putExtra("bookmark_y", y)
-                                    startActivity(intent)
-                                }
-                            }
-                        }
+                    group.reference.get().addOnSuccessListener { groupDoc ->
+                        val places = groupDoc.data?.keys ?: emptySet()
+                        bookmarkList.addAll(places.map { it.toString() })
+                        adapter.notifyDataSetChanged()
+                    }
                 }
             }
     }

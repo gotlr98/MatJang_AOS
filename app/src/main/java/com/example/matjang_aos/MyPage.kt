@@ -5,25 +5,45 @@ import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.MenuItem
-import android.widget.*
+import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import androidx.appcompat.widget.Toolbar
+import com.example.matjang_aos.databinding.ActivityMyPageBinding
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 
 class MyPage : AppCompatActivity() {
-    private lateinit var reviewContainer: LinearLayout
-    private lateinit var followingContainer: LinearLayout
+
+    private lateinit var binding: ActivityMyPageBinding
     private val firestore = FirebaseFirestore.getInstance()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_my_page)
+        binding = ActivityMyPageBinding.inflate(layoutInflater)
+        setContentView(binding.root)
 
-        initViews()
         setupToolbar()
         setupButtons()
+        loadUserData()
+    }
 
+    private fun setupToolbar() {
+        setSupportActionBar(binding.toolbar.customToolbar)
+        supportActionBar?.setDisplayHomeAsUpEnabled(true)
+        supportActionBar?.title = "마이페이지"
+    }
+
+    private fun setupButtons() {
+        binding.btnAddFollow.setOnClickListener {
+            startActivity(Intent(this, FindFollowerView::class.java))
+        }
+
+        binding.btnDeleteAccount.setOnClickListener {
+            deleteAccount()
+        }
+    }
+
+    private fun loadUserData() {
         val email = UserManager.currentUser?.email
         val type = UserManager.currentUser?.type
 
@@ -34,50 +54,21 @@ class MyPage : AppCompatActivity() {
         }
 
         val docPath = "$email&$type"
-        loadUserData(docPath)
-    }
-
-    // 초기 View 바인딩
-    private fun initViews() {
-        reviewContainer = findViewById(R.id.review_container)
-        followingContainer = findViewById(R.id.following_container)
-    }
-
-    // 툴바 설정
-    private fun setupToolbar() {
-        val toolbar = findViewById<Toolbar>(R.id.custom_toolbar)
-        setSupportActionBar(toolbar)
-        supportActionBar?.setDisplayHomeAsUpEnabled(true)
-        supportActionBar?.title = "마이페이지"
-    }
-
-    // 버튼 설정
-    private fun setupButtons() {
-        findViewById<ImageButton>(R.id.btn_add_follow).setOnClickListener {
-            startActivity(Intent(this, FindFollowerView::class.java))
-        }
-
-        findViewById<Button>(R.id.btn_delete_account).setOnClickListener {
-            deleteAccount()
-        }
-    }
-
-    // 사용자 데이터 로딩
-    private fun loadUserData(docPath: String) {
         firestore.collection("users")
             .document(docPath)
             .get()
             .addOnSuccessListener { document ->
                 val user = document.toObject(UserModel::class.java)
                 displayUserReviews(user?.reviews)
-                displayFollowingUsers(user?.following ?: emptyList()) // ✅ 정리됨
+                displayFollowingUsers(user?.following ?: emptyList())
             }
     }
 
-    // 리뷰 보여주기
     private fun displayUserReviews(reviews: List<Review>?) {
+        binding.reviewContainer.removeAllViews()
+
         if (reviews.isNullOrEmpty()) {
-            reviewContainer.addView(TextView(this).apply {
+            binding.reviewContainer.addView(TextView(this).apply {
                 text = "작성한 리뷰가 없습니다."
                 textSize = 16f
             })
@@ -86,18 +77,19 @@ class MyPage : AppCompatActivity() {
 
         val inflater = LayoutInflater.from(this)
         for (review in reviews) {
-            val cardView = inflater.inflate(R.layout.review_card, reviewContainer, false)
+            val cardView = inflater.inflate(R.layout.review_card, binding.reviewContainer, false)
             cardView.findViewById<TextView>(R.id.place_name).text = "📍 ${review.placeName}"
             cardView.findViewById<TextView>(R.id.rate_text).text = "⭐ 평점: ${review.rate}"
             cardView.findViewById<TextView>(R.id.comment_text).text = "💬 ${review.comment}"
-            reviewContainer.addView(cardView)
+            binding.reviewContainer.addView(cardView)
         }
     }
 
-    // 팔로잉 유저 보여주기
     private fun displayFollowingUsers(followingList: List<String>) {
+        binding.followingContainer.removeAllViews()
+
         if (followingList.isEmpty()) {
-            followingContainer.addView(TextView(this).apply {
+            binding.followingContainer.addView(TextView(this).apply {
                 text = "팔로잉한 유저가 없습니다."
                 textSize = 16f
             })
@@ -115,19 +107,19 @@ class MyPage : AppCompatActivity() {
                     val followType = followUser.type ?: "kakao"
                     val followDocPath = "$followEmail&$followType"
 
-                    val cardView = inflater.inflate(R.layout.follow_card, followingContainer, false)
+                    val cardView = inflater.inflate(R.layout.follow_card, binding.followingContainer, false)
                     cardView.findViewById<TextView>(R.id.user_email).text = followEmail
-                    cardView.findViewById<TextView>(R.id.review_count).text = "리뷰 ${followUser.reviews?.size ?: 0}개"
+                    cardView.findViewById<TextView>(R.id.review_count).text =
+                        "리뷰 ${followUser.reviews?.size ?: 0}개"
 
-                    val unfollowBtn = cardView.findViewById<ImageButton>(R.id.follow_button)
+                    val unfollowBtn = cardView.findViewById<android.widget.ImageButton>(R.id.follow_button)
                     unfollowBtn.setImageResource(R.drawable.cancel)
                     unfollowBtn.setOnClickListener {
-                        unfollowUser("${
-                            UserManager.currentUser?.email
-                        }&${UserManager.currentUser?.type}", followDocPath, followEmail)
+                        val myDocPath = "${UserManager.currentUser?.email}&${UserManager.currentUser?.type}"
+                        unfollowUser(myDocPath, followDocPath, followEmail)
                     }
 
-                    followingContainer.addView(cardView)
+                    binding.followingContainer.addView(cardView)
                 }
         }
     }
@@ -147,23 +139,15 @@ class MyPage : AppCompatActivity() {
         }
     }
 
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        return when (item.itemId) {
-            android.R.id.home -> {
-                finish()
-                true
-            }
-            else -> super.onOptionsItemSelected(item)
-        }
-    }
-
     private fun deleteAccount() {
         val email = UserManager.currentUser?.email
         val type = UserManager.currentUser?.type
+
         if (email == null || type == null) {
             Toast.makeText(this, "로그인 정보를 불러올 수 없습니다.", Toast.LENGTH_SHORT).show()
             return
         }
+
         val docPath = "$email&$type"
         val userDocRef = firestore.collection("users").document(docPath)
 
@@ -182,6 +166,15 @@ class MyPage : AppCompatActivity() {
             }
         }.addOnFailureListener {
             Toast.makeText(this, "리뷰 삭제 실패: ${it.message}", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        return if (item.itemId == android.R.id.home) {
+            finish()
+            true
+        } else {
+            super.onOptionsItemSelected(item)
         }
     }
 }
