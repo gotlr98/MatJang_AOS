@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
+import android.view.Menu
 import android.view.MenuItem
 import android.widget.TextView
 import android.widget.Toast
@@ -27,6 +28,25 @@ class MyPageActivity : AppCompatActivity() {
         loadUserData()
     }
 
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        menuInflater.inflate(R.menu.menu_mypage, menu)
+        return true
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        return when (item.itemId) {
+            android.R.id.home -> {
+                finish()
+                true
+            }
+            R.id.action_logout -> {
+                logout()
+                true
+            }
+            else -> super.onOptionsItemSelected(item)
+        }
+    }
+
     private fun setupToolbar() {
         setSupportActionBar(binding.toolbar.customToolbar)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
@@ -42,6 +62,8 @@ class MyPageActivity : AppCompatActivity() {
             deleteAccount()
         }
     }
+
+
 
     private fun loadUserData() {
         val email = UserManager.currentUser?.email
@@ -169,12 +191,27 @@ class MyPageActivity : AppCompatActivity() {
         }
     }
 
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        return if (item.itemId == android.R.id.home) {
-            finish()
-            true
-        } else {
-            super.onOptionsItemSelected(item)
+    private fun logout() {
+        // 자동 로그인 정보 제거
+        getSharedPreferences("signIn", Context.MODE_PRIVATE).edit().clear().apply()
+        UserManager.logout() // 현재 세션 로그아웃
+
+        Toast.makeText(this, "로그아웃 되었습니다.", Toast.LENGTH_SHORT).show()
+
+        // 로그인 화면으로 이동
+        val intent = Intent(this, SignInActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         }
+        startActivity(intent)
+        finish()
     }
+
+//    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+//        return if (item.itemId == android.R.id.home) {
+//            finish()
+//            true
+//        } else {
+//            super.onOptionsItemSelected(item)
+//        }
+//    }
 }
