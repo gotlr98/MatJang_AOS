@@ -5,7 +5,7 @@
     android:id="@+id/drawer_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".MainMap">
+    tools:context=".MainMapActivity">
 
     <!-- 메인 콘텐츠 영역 -->
     <androidx.constraintlayout.widget.ConstraintLayout
@@ -97,6 +97,18 @@
             app:layout_constraintTop_toBottomOf="@id/search_bar_container"
             app:layout_constraintStart_toStartOf="parent" />
 
+        <!-- 현재 위치 이동 버튼 (FAB) -->
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/fabMyLocation"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="50dp"
+            android:src="@drawable/ic_my_location"
+            android:contentDescription="현재 위치로 이동"
+            android:tint="@android:color/white"
+            android:backgroundTint="@color/white"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 
     <!-- 사이드 네비게이션 메뉴 -->

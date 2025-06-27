@@ -35,7 +35,7 @@ class MyPageActivity : AppCompatActivity() {
 
     private fun setupButtons() {
         binding.btnAddFollow.setOnClickListener {
-            startActivity(Intent(this, FindFollowerView::class.java))
+            startActivity(Intent(this, FindFollowerActivity::class.java))
         }
 
         binding.btnDeleteAccount.setOnClickListener {

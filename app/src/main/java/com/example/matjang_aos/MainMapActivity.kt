@@ -1,7 +1,10 @@
 package com.example.matjang_aos
 
+import android.Manifest
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.location.Location
 import android.os.Bundle
 import android.util.Log
 import android.view.MenuItem
@@ -9,18 +12,18 @@ import android.view.View
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
 import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
 import com.example.matjang_aos.databinding.ActivityMainMapBinding
+import com.google.android.gms.location.*
 import com.google.firebase.firestore.FirebaseFirestore
 import com.kakao.vectormap.*
 import com.kakao.vectormap.camera.CameraUpdateFactory
 import com.kakao.vectormap.label.*
-import retrofit2.Call
-import retrofit2.Callback
-import retrofit2.Response
-import retrofit2.Retrofit
+import retrofit2.*
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.GET
 import retrofit2.http.Header
@@ -29,8 +32,10 @@ import retrofit2.http.Query
 class MainMapActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainMapBinding
     private lateinit var kakaoMap: KakaoMap
+    private lateinit var fusedLocationClient: FusedLocationProviderClient
     private var mapMode: String = "BROWSE"
     private val db = FirebaseFirestore.getInstance()
+    private var isGuest: Boolean = false
 
     private val apiService: KakaoApiService by lazy {
         Retrofit.Builder()
@@ -38,6 +43,13 @@ class MainMapActivity : AppCompatActivity() {
             .addConverterFactory(GsonConverterFactory.create())
             .build()
             .create(KakaoApiService::class.java)
+    }
+
+    private val locationPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) moveToCurrentLocation()
+        else Toast.makeText(this, "위치 권한이 필요합니다.", Toast.LENGTH_SHORT).show()
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -52,6 +64,10 @@ class MainMapActivity : AppCompatActivity() {
             finish()
             return
         }
+
+        isGuest = UserManager.currentUser?.type == Type.Guest
+
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
 
         setupUI()
         setupMap()
@@ -79,7 +95,9 @@ class MainMapActivity : AppCompatActivity() {
     private fun setupUI() {
         binding.menuButton.setOnClickListener {
             binding.drawerLayout.openDrawer(GravityCompat.START)
-            loadBookmarks()
+            if (!isGuest) {
+                loadBookmarks()
+            }
         }
 
         binding.mapModeSpinner.apply {
@@ -93,8 +111,13 @@ class MainMapActivity : AppCompatActivity() {
                     mapMode = if (position == 0) "BROWSE" else "FIND_MATJIP"
                     handleMapModeChange()
                 }
+
                 override fun onNothingSelected(parent: AdapterView<*>) {}
             }
+        }
+
+        binding.fabMyLocation.setOnClickListener {
+            checkLocationPermissionAndMove()
         }
 
         val email = getSharedPreferences("signIn", Context.MODE_PRIVATE).getString("email", "알 수 없음")
@@ -113,17 +136,40 @@ class MainMapActivity : AppCompatActivity() {
         }, object : KakaoMapReadyCallback() {
             override fun onMapReady(map: KakaoMap) {
                 kakaoMap = map
+                moveToCurrentLocation()
                 handleMapModeChange()
+                checkLocationPermissionAndMove()
             }
         })
     }
 
+    private fun checkLocationPermissionAndMove() {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+            != PackageManager.PERMISSION_GRANTED
+        ) {
+            locationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+        } else {
+            moveToCurrentLocation()
+        }
+    }
+
+    private fun moveToCurrentLocation() {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+            != PackageManager.PERMISSION_GRANTED
+        ) return
+
+        fusedLocationClient.lastLocation.addOnSuccessListener { location: Location? ->
+            location?.let {
+                val latLng = LatLng.from(it.latitude, it.longitude)
+                kakaoMap.moveCamera(CameraUpdateFactory.newCenterPosition(latLng))
+            } ?: Toast.makeText(this, "현재 위치를 가져올 수 없습니다.", Toast.LENGTH_SHORT).show()
+        }.addOnFailureListener {
+            Toast.makeText(this, "위치 오류: ${it.localizedMessage}", Toast.LENGTH_SHORT).show()
+        }
+    }
+
     private fun handleMapModeChange() {
         if (!::kakaoMap.isInitialized) return
-        val curLatLng = LatLng.from(
-            kakaoMap.cameraPosition!!.position.latitude,
-            kakaoMap.cameraPosition!!.position.longitude
-        )
         kakaoMap.labelManager?.getLodLayer()?.removeAll()
 
         if (mapMode == "FIND_MATJIP") {
@@ -132,7 +178,9 @@ class MainMapActivity : AppCompatActivity() {
                 kakaoMap.labelManager?.getLodLayer()?.removeAll()
                 updateLabelsAtLocation(latLng)
             }
-            updateLabelsAtLocation(curLatLng)
+            kakaoMap.cameraPosition?.let {
+                updateLabelsAtLocation(LatLng.from(it.position.latitude, it.position.longitude))
+            }
         } else {
             kakaoMap.setOnCameraMoveEndListener(null)
         }
@@ -159,7 +207,7 @@ class MainMapActivity : AppCompatActivity() {
                 supportFragmentManager.beginTransaction().remove(it).commitAllowingStateLoss()
             }
         }
-        PlaceDetailBottomSheetFragment(place).show(supportFragmentManager, "place_detail")
+        PlaceDetailBottomSheetFragment(place, isGuest).show(supportFragmentManager, "place_detail")
     }
 
     private fun moveToPlace(matjip: Matjip) {
@@ -174,6 +222,8 @@ class MainMapActivity : AppCompatActivity() {
     }
 
     private fun loadBookmarks() {
+        if (isGuest) return
+
         val email = getSharedPreferences("signIn", Context.MODE_PRIVATE).getString("email", null) ?: return
         val userId = "$email&kakao"
         val menu = binding.navigationView.menu
@@ -193,6 +243,8 @@ class MainMapActivity : AppCompatActivity() {
     }
 
     private fun toggleBookmarkList(groupName: String, groupMenuItem: MenuItem) {
+        if (isGuest) return
+
         val email = getSharedPreferences("signIn", Context.MODE_PRIVATE).getString("email", null) ?: return
         val userId = "$email&kakao"
         val menu = binding.navigationView.menu

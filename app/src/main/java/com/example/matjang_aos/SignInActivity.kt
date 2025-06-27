@@ -54,6 +54,10 @@ class SignInActivity : AppCompatActivity() {
         binding.signInKakao.setOnClickListener {
             signInKakao()
         }
+
+        binding.signInGuest.setOnClickListener {
+            signInGuest()
+        }
     }
 
     private fun signInKakao() {
@@ -105,6 +109,18 @@ class SignInActivity : AppCompatActivity() {
             UserManager.init(this, email) {
                 goToMainMap()
             }
+        }
+    }
+
+    private fun signInGuest() {
+        signInPrefs.edit().apply {
+            remove("token")
+            putString("email", "guest")
+            apply()
+        }
+
+        UserManager.init(this, "guest") {
+            goToMainMap()
         }
     }
 

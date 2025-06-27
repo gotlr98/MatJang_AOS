@@ -16,7 +16,10 @@ import com.google.firebase.firestore.SetOptions
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 
-    class PlaceDetailBottomSheetFragment(private val place: Matjip) : BottomSheetDialogFragment() {
+class PlaceDetailBottomSheetFragment(
+    private val place: Matjip,
+    private val isGuest: Boolean = false
+) : BottomSheetDialogFragment() {
 
     private var _binding: FragmentPlaceDetailBottomSheetBinding? = null
     private val binding get() = _binding!!
@@ -46,7 +49,7 @@ import com.google.firebase.ktx.Firebase
     ): View {
         _binding = FragmentPlaceDetailBottomSheetBinding.inflate(inflater, container, false)
         UserManager.loadUserFromPrefs(requireContext())
-        checkBookmarkStatus()
+        if (!isGuest) checkBookmarkStatus()
         setupUI()
         return binding.root
     }
@@ -54,12 +57,22 @@ import com.google.firebase.ktx.Firebase
     private fun setupUI() {
         binding.placeName.text = place.placeName
         binding.address.text = place.address
-        updateBookmarkIcon()
+        if (!isGuest) updateBookmarkIcon() else binding.bookmarkButton.visibility = View.GONE
 
         binding.root.setOnClickListener {
-            if (!isUserLoggedIn()) return@setOnClickListener
+            val user = UserManager.currentUser
 
-            val user = UserManager.currentUser!!
+            if (user == null || user.email.isBlank()) {
+                Toast.makeText(requireContext(), "로그인 후 이용해주세요.", Toast.LENGTH_SHORT).show()
+                dismiss()
+                return@setOnClickListener
+            }
+
+            if (user.type == Type.Guest) {
+                Toast.makeText(requireContext(), "게스트 로그인 사용자는 이용할 수 없습니다.", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
             ReviewUtil.checkIfUserReviewed(user.email, user.type.name, place.placeName) { hasReviewed ->
                 val intent = Intent(requireContext(),
                     if (hasReviewed) ReviewDetailActivity::class.java else ReviewWriteActivity::class.java
@@ -73,6 +86,7 @@ import com.google.firebase.ktx.Firebase
 
         binding.bookmarkButton.setOnClickListener {
             if (!isUserLoggedIn()) return@setOnClickListener
+            if (isGuest) return@setOnClickListener
 
             if (isBookmarked) {
                 Toast.makeText(requireContext(), "이미 북마크에 등록된 장소입니다.", Toast.LENGTH_SHORT).show()
@@ -201,3 +215,4 @@ import com.google.firebase.ktx.Firebase
         _binding = null
     }
 }
+

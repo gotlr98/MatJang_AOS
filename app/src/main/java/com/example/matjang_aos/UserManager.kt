@@ -28,6 +28,10 @@ object UserManager {
 
     fun isLoggedIn(): Boolean = _currentUser != null
 
+    fun isGuest(): Boolean {
+        return currentUser?.email == "guest"
+    }
+
     fun saveUserToPrefs(context: Context) {
         currentUser?.let { user ->
             val prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
