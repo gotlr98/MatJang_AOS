@@ -12,7 +12,7 @@ import com.example.matjang_aos.databinding.ActivityMyPageBinding
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 
-class MyPage : AppCompatActivity() {
+class MyPageActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMyPageBinding
     private val firestore = FirebaseFirestore.getInstance()

@@ -3,21 +3,16 @@ package com.example.matjang_aos
 import android.os.Bundle
 import android.view.MenuItem
 import android.widget.ImageButton
-import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
-import androidx.appcompat.widget.Toolbar
-import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
-import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+import com.example.matjang_aos.databinding.ActivityFindFollowerBinding
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 
-class FindFollowerView : AppCompatActivity() {
-    private lateinit var container: LinearLayout
-    private lateinit var swipeRefreshLayout: SwipeRefreshLayout
+class FindFollowerActivity : AppCompatActivity() {
+
+    private lateinit var binding: ActivityFindFollowerBinding
     private val firestore = FirebaseFirestore.getInstance()
     private val currentUserEmail = UserManager.currentUser?.email
     private val currentUserType = UserManager.currentUser?.type
@@ -25,29 +20,23 @@ class FindFollowerView : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_find_follower_view)
+        binding = ActivityFindFollowerBinding.inflate(layoutInflater)
+        setContentView(binding.root)
 
-        container = findViewById(R.id.follower_container)
-        swipeRefreshLayout = findViewById(R.id.swipeRefresh)
+        setSupportActionBar(binding.customToolbar.customToolbar)
+        supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
-        val toolbar = findViewById<Toolbar>(R.id.custom_toolbar)
-        setSupportActionBar(toolbar)
-        supportActionBar?.setDisplayHomeAsUpEnabled(true) // 뒤로가기 버튼
-
-        swipeRefreshLayout.setOnRefreshListener {
-            loadUsers()
-        }
-
+        binding.swipeRefresh.setOnRefreshListener { loadUsers() }
         loadUsers()
     }
 
     private fun loadUsers() {
-        swipeRefreshLayout.isRefreshing = true
-        container.removeAllViews()
+        binding.swipeRefresh.isRefreshing = true
+        binding.followerContainer.removeAllViews()
 
-        if (currentUserEmail == null || currentUserType == null) {
+        if (currentUserEmail.isNullOrBlank() || currentUserType == null) {
             Toast.makeText(this, "유저 정보가 유효하지 않습니다.", Toast.LENGTH_SHORT).show()
-            swipeRefreshLayout.isRefreshing = false
+            binding.swipeRefresh.isRefreshing = false
             return
         }
 
@@ -56,16 +45,16 @@ class FindFollowerView : AppCompatActivity() {
         currentUserRef.get().addOnSuccessListener { doc ->
             val followingList = doc.get("following") as? List<*> ?: emptyList<String>()
 
-            firestore.collection("users")
-                .get()
+            firestore.collection("users").get()
                 .addOnSuccessListener { documents ->
-                    for (doc in documents) {
-                        val user = doc.toObject(UserModel::class.java)
-                        val email = user.email ?: continue
-                        if (email == currentUserEmail) continue
+                    documents.forEach { userDoc ->
+                        val user = userDoc.toObject(UserModel::class.java)
+                        val email = user.email ?: return@forEach
+                        if (email == currentUserEmail) return@forEach
 
                         val reviewCount = user.reviews?.size ?: 0
-                        val card = layoutInflater.inflate(R.layout.follow_card, container, false)
+                        val card = layoutInflater.inflate(R.layout.follow_card, binding.followerContainer, false)
+
                         val emailView = card.findViewById<TextView>(R.id.user_email)
                         val reviewView = card.findViewById<TextView>(R.id.review_count)
                         val followButton = card.findViewById<ImageButton>(R.id.follow_button)
@@ -79,33 +68,31 @@ class FindFollowerView : AppCompatActivity() {
                         )
 
                         followButton.setOnClickListener {
-                            toggleFollow(email, isFollowing) {
-                                loadUsers() // refresh only after follow/unfollow
-                            }
+                            toggleFollow(email, isFollowing) { loadUsers() }
                         }
 
-                        container.addView(card)
+                        binding.followerContainer.addView(card)
                     }
-                    swipeRefreshLayout.isRefreshing = false
+
+                    binding.swipeRefresh.isRefreshing = false
                 }
                 .addOnFailureListener {
-                    Toast.makeText(this, "유저 목록 로딩 실패: ${it.message}", Toast.LENGTH_SHORT).show()
-                    swipeRefreshLayout.isRefreshing = false
+                    showToast("유저 목록 로딩 실패: ${it.message}")
+                    binding.swipeRefresh.isRefreshing = false
                 }
         }.addOnFailureListener {
-            Toast.makeText(this, "내 정보 조회 실패: ${it.message}", Toast.LENGTH_SHORT).show()
-            swipeRefreshLayout.isRefreshing = false
+            showToast("내 정보 조회 실패: ${it.message}")
+            binding.swipeRefresh.isRefreshing = false
         }
     }
 
-    private fun toggleFollow(targetEmail: String, isCurrentlyFollowing: Boolean, onComplete: () -> Unit) {
+    private fun toggleFollow(targetEmail: String, isFollowing: Boolean, onComplete: () -> Unit) {
         val usersRef = firestore.collection("users")
 
-        usersRef.whereEqualTo("email", targetEmail)
-            .get()
+        usersRef.whereEqualTo("email", targetEmail).get()
             .addOnSuccessListener { querySnapshot ->
                 if (querySnapshot.isEmpty) {
-                    Toast.makeText(this, "대상 유저 정보를 찾을 수 없습니다.", Toast.LENGTH_SHORT).show()
+                    showToast("대상 유저 정보를 찾을 수 없습니다.")
                     return@addOnSuccessListener
                 }
 
@@ -117,7 +104,7 @@ class FindFollowerView : AppCompatActivity() {
                 val targetUserRef = usersRef.document(targetDocPath)
 
                 firestore.runBatch { batch ->
-                    if (isCurrentlyFollowing) {
+                    if (isFollowing) {
                         batch.update(currentUserRef, "following", FieldValue.arrayRemove(targetEmail))
                         batch.update(targetUserRef, "follower", FieldValue.arrayRemove(currentUserEmail))
                     } else {
@@ -125,22 +112,26 @@ class FindFollowerView : AppCompatActivity() {
                         batch.update(targetUserRef, "follower", FieldValue.arrayUnion(currentUserEmail))
                     }
                 }.addOnSuccessListener {
-                    val action = if (isCurrentlyFollowing) "언팔로우" else "팔로우"
-                    Toast.makeText(this, "$targetEmail $action 완료!", Toast.LENGTH_SHORT).show()
+                    val action = if (isFollowing) "언팔로우" else "팔로우"
+                    showToast("$targetEmail $action 완료!")
                     onComplete()
                 }.addOnFailureListener {
-                    Toast.makeText(this, "$targetEmail 처리 실패: ${it.message}", Toast.LENGTH_SHORT).show()
+                    showToast("$targetEmail 처리 실패: ${it.message}")
                 }
             }
             .addOnFailureListener {
-                Toast.makeText(this, "유저 정보 조회 실패: ${it.message}", Toast.LENGTH_SHORT).show()
+                showToast("유저 정보 조회 실패: ${it.message}")
             }
+    }
+
+    private fun showToast(message: String) {
+        Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
             android.R.id.home -> {
-                finish() // 현재 액티비티 종료 = 뒤로가기
+                finish()
                 true
             }
             else -> super.onOptionsItemSelected(item)

@@ -101,7 +101,7 @@ class MainMapActivity : AppCompatActivity() {
         val header = binding.navigationView.getHeaderView(0)
         header.findViewById<android.widget.TextView>(R.id.email_text).text = "안녕하세요 \n $email 님"
         header.findViewById<android.widget.ImageView>(R.id.profile_icon).setOnClickListener {
-            startActivity(Intent(this, MyPage::class.java))
+            startActivity(Intent(this, MyPageActivity::class.java))
         }
     }
 

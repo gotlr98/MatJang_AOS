@@ -34,7 +34,7 @@
             android:name=".BookmarkList"
             android:exported="false" />
         <activity
-            android:name=".MyPage"
+            android:name=".MyPageActivity"
             android:exported="false" />
         <activity
             android:name=".ReviewDetailActivity"
