@@ -38,5 +38,15 @@
             android:layout_marginTop="2dp"
             android:textSize="14sp"
             android:textColor="#333333"/>
+
+        <Button
+            android:id="@+id/report_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="신고"
+            android:layout_gravity="end"
+            android:textColor="@color/red"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:padding="8dp" />
     </LinearLayout>
 </androidx.cardview.widget.CardView>
