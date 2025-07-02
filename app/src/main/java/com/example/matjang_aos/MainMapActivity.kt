@@ -59,6 +59,13 @@ class MainMapActivity : AppCompatActivity() {
 
         mapMode = intent.getStringExtra("mapType") ?: mapMode
         UserManager.loadUserFromPrefs(this)
+
+        Log.d("MainMap", "Loaded user: ${UserManager.currentUser}")
+        Log.d("MainMap", "User is guest: ${UserManager.isGuest()}")
+
+        isGuest = UserManager.isGuest()
+        Log.d("MainMap", "isGuest flag in MainMapActivity: $isGuest")
+
         if (UserManager.currentUser == null) {
             Toast.makeText(this, "로그인 정보가 없습니다.", Toast.LENGTH_SHORT).show()
             finish()
@@ -202,6 +209,7 @@ class MainMapActivity : AppCompatActivity() {
     }
 
     private fun showPlaceDetailDialog(place: Matjip) {
+        Log.d("MainMap", "Launching BottomSheet with isGuest = $isGuest")
         supportFragmentManager.findFragmentByTag("place_detail")?.let {
             if (it is PlaceDetailBottomSheetFragment && it.isAdded) {
                 supportFragmentManager.beginTransaction().remove(it).commitAllowingStateLoss()

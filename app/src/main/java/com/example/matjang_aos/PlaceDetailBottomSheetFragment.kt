@@ -41,7 +41,15 @@ class PlaceDetailBottomSheetFragment(
 
         val bottomSheet = dialog?.findViewById<View>(com.google.android.material.R.id.design_bottom_sheet)
         bottomSheet?.setBackgroundColor(android.graphics.Color.WHITE)
+
+        bottomSheet?.let {
+            val behavior = com.google.android.material.bottomsheet.BottomSheetBehavior.from(it)
+            // 원하는 높이를 디바이스 높이의 60%로 설정 (조절 가능)
+            behavior.peekHeight = (resources.displayMetrics.heightPixels * 0.6).toInt()
+            behavior.state = com.google.android.material.bottomsheet.BottomSheetBehavior.STATE_EXPANDED
+        }
     }
+
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -55,10 +63,20 @@ class PlaceDetailBottomSheetFragment(
     }
 
     private fun setupUI() {
+
+        Log.d("BottomSheet", "isGuest = $isGuest / user = ${UserManager.currentUser}")
+
         binding.placeName.text = place.placeName
         binding.address.text = place.address
-        if (!isGuest) updateBookmarkIcon() else binding.bookmarkButton.visibility = View.GONE
 
+        // 북마크 버튼 게스트는 숨김
+        if (!isGuest) {
+            updateBookmarkIcon()
+        } else {
+            binding.bookmarkButton.visibility = View.GONE
+        }
+
+        // 바텀시트 전체 클릭 시 이벤트 처리
         binding.root.setOnClickListener {
             val user = UserManager.currentUser
 
@@ -68,13 +86,15 @@ class PlaceDetailBottomSheetFragment(
                 return@setOnClickListener
             }
 
-            if (user.type == Type.Guest) {
+            // 게스트 로그인 시 리뷰 화면 진입 막기
+            if (user.type == Type.Guest || isGuest) {
                 Toast.makeText(requireContext(), "게스트 로그인 사용자는 이용할 수 없습니다.", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
             ReviewUtil.checkIfUserReviewed(user.email, user.type.name, place.placeName) { hasReviewed ->
-                val intent = Intent(requireContext(),
+                val intent = Intent(
+                    requireContext(),
                     if (hasReviewed) ReviewDetailActivity::class.java else ReviewWriteActivity::class.java
                 ).apply {
                     putExtra("place", place)
@@ -215,4 +235,3 @@ class PlaceDetailBottomSheetFragment(
         _binding = null
     }
 }
-

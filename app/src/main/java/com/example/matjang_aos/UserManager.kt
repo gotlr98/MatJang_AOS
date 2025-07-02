@@ -29,8 +29,11 @@ object UserManager {
     fun isLoggedIn(): Boolean = _currentUser != null
 
     fun isGuest(): Boolean {
-        return currentUser?.email == "guest"
+        val result = currentUser?.type == Type.Guest
+        Log.d("UserManager", "isGuest() called: ${currentUser?.email}, type=${currentUser?.type}, result=$result")
+        return currentUser?.type == Type.Guest
     }
+
 
     fun saveUserToPrefs(context: Context) {
         currentUser?.let { user ->
@@ -45,17 +48,23 @@ object UserManager {
         val prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
         val userJson = prefs.getString(KEY_USER, null)
 
-        if (!userJson.isNullOrBlank()) {
-            val user = Gson().fromJson(userJson, UserModel::class.java)
-            if (!user.email.isNullOrBlank()) {
-                _currentUser = user
-            } else {
-                Log.w("UserManager", "저장된 사용자 이메일이 비어있음.")
-            }
-        }
+        Log.d("UserManager", "Raw user JSON from prefs: $userJson")
 
-        Log.d("UserManager", "loaded user json: $userJson")
+        if (!userJson.isNullOrBlank()) {
+            try {
+                val user = Gson().fromJson(userJson, UserModel::class.java)
+                if (!user.email.isNullOrBlank()) {
+                    _currentUser = user
+                    Log.d("UserManager", "loadUserFromPrefs: user loaded - email=${user.email}, type=${user.type}")
+                }
+            } catch (e: Exception) {
+                Log.e("UserManager", "loadUserFromPrefs 실패: ${e.message}")
+            }
+        } else {
+            Log.w("UserManager", "userJson이 null 또는 blank임")
+        }
     }
+
 
     fun init(context: Context, email: String, onComplete: (UserModel) -> Unit) {
         val docId = "$email&kakao"

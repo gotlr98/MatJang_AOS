@@ -113,16 +113,23 @@ class SignInActivity : AppCompatActivity() {
     }
 
     private fun signInGuest() {
+        // 기존 잘못된 유저 정보 제거
+        getSharedPreferences("user_prefs", Context.MODE_PRIVATE).edit().clear().apply()
+
         signInPrefs.edit().apply {
             remove("token")
             putString("email", "guest")
             apply()
         }
 
-        UserManager.init(this, "guest") {
-            goToMainMap()
-        }
+        val guestUser = UserModel(email = "guest", type = Type.Guest, reviews = emptyList())
+        UserManager.login(guestUser)
+        UserManager.saveUserToPrefs(this)
+
+        goToMainMap()
     }
+
+
 
     private fun goToMainMap() {
         startActivity(Intent(this, MainMapActivity::class.java))

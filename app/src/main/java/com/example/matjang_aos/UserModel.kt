@@ -12,7 +12,7 @@ enum class Type {
 data class UserModel(
 
     val email: String = "",
-    val type: Type = Type.kakao,
+    val type: Type = Type.Guest,
     val reviews: List<Review> = emptyList(),
     val follower: List<String> = listOf(),
     val following: List<String> = listOf()

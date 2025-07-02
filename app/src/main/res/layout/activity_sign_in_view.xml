@@ -7,24 +7,32 @@
         android:id="@+id/main"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        tools:context=".ActivitySignInViewBinding"
+        tools:context=".SignInActivity"
         android:orientation="vertical"
         android:gravity="center"
-        android:padding="32dp">
+        android:padding="32dp"
+        android:background="@color/sign_in_background">
 
         <ImageButton
             android:id="@+id/signInKakao"
             app:srcCompat="@drawable/kakao_login_medium_narrow"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
             android:contentDescription="kakaoBtn"
-            android:layout_marginBottom="24dp" />
+            android:layout_marginBottom="24dp"
+            android:background="@null"
+            android:scaleType="fitCenter" />
 
         <Button
             android:id="@+id/signInGuest"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="게스트 로그인" />
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:text="게스트 로그인"
+            android:background="@drawable/btn_background_rounded"
+            android:textColor="@android:color/black"
+            android:textSize="16sp"
+            android:fontFamily="sans-serif-medium"
+            android:gravity="center" />
 
     </LinearLayout>
 
