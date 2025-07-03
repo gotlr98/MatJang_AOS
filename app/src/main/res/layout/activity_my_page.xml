@@ -1,23 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
-
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="vertical"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="#F9F9F9">
 
+    <!-- 상단 툴바 -->
     <include
         android:id="@+id/toolbar"
         layout="@layout/toolbar" />
 
-    <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    <!-- 내용 -->
+    <ScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:padding="16dp">
+        android:padding="20dp">
 
-
-
-        <!-- ScrollView 안의 하나뿐인 자식 LinearLayout -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -30,61 +29,66 @@
                 android:layout_height="wrap_content"
                 android:src="@drawable/ic_person_add"
                 android:contentDescription="팔로우 추가"
-                android:layout_margin="16dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
-                android:layout_gravity="end"/>
+                android:layout_gravity="end"
+                android:layout_marginBottom="16dp"/>
 
+            <!-- 회원 탈퇴 버튼 (눌리는 범위 최소화, 오른쪽 정렬) -->
             <Button
                 android:id="@+id/btn_delete_account"
-                android:layout_width="match_parent"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="회원탈퇴"
-                android:layout_marginTop="16dp"
+                android:layout_marginTop="8dp"
+                android:layout_gravity="end"
                 android:backgroundTint="@color/red"
-                android:textColor="@android:color/white"/>
+                android:textColor="@android:color/white"
+                android:drawableStart="@drawable/ic_delete"
+                android:drawablePadding="8dp"
+                android:minWidth="0dp"
+                android:minHeight="0dp"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp" />
 
-
-            <!-- 📌 내가 작성한 리뷰 텍스트 -->
+            <!-- 내가 작성한 리뷰 -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="📌 내가 작성한 리뷰"
-                android:textSize="18sp"
-                android:layout_marginBottom="8dp"
-                android:textStyle="bold" />
+                android:textSize="20sp"
+                android:textStyle="bold"
+                android:layout_marginTop="32dp"
+                android:layout_marginBottom="12dp" />
 
-            <!-- 리뷰 컨테이너 -->
             <LinearLayout
                 android:id="@+id/review_container"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:divider="@android:color/transparent"
+                android:divider="@android:color/darker_gray"
                 android:showDividers="middle"
-                android:dividerPadding="8dp" />
+                android:dividerPadding="8dp"
+                android:paddingBottom="16dp" />
 
-            <!-- 👥 팔로잉 목록 텍스트 -->
+            <!-- 팔로잉 목록 -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="👥 팔로잉 목록"
-                android:textSize="18sp"
+                android:textSize="20sp"
+                android:textStyle="bold"
                 android:layout_marginTop="24dp"
-                android:layout_marginBottom="8dp"
-                android:textStyle="bold" />
+                android:layout_marginBottom="12dp" />
 
-            <!-- 팔로잉 컨테이너 -->
             <LinearLayout
                 android:id="@+id/following_container"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:divider="@android:color/transparent"
+                android:divider="@android:color/darker_gray"
                 android:showDividers="middle"
-                android:dividerPadding="8dp" />
-
+                android:dividerPadding="8dp"
+                android:paddingBottom="32dp" />
         </LinearLayout>
     </ScrollView>
-
 </LinearLayout>
-

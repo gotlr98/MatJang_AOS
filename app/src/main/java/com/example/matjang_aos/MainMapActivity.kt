@@ -37,6 +37,12 @@ class MainMapActivity : AppCompatActivity() {
     private val db = FirebaseFirestore.getInstance()
     private var isGuest: Boolean = false
 
+    private val openedBookmarkGroups = mutableSetOf<String>()
+    private val groupItemIdMap = mutableMapOf<String, Int>() // 그룹명 - ID 매핑
+    private var uniqueMenuId = 1000 // MenuItem에 고유 ID 부여
+    private val bookmarkChildItemIds = mutableMapOf<String, MutableList<Int>>() // 그룹별 맛집 아이템 ID 목록
+
+
     private val apiService: KakaoApiService by lazy {
         Retrofit.Builder()
             .baseUrl("https://dapi.kakao.com/")
@@ -131,8 +137,13 @@ class MainMapActivity : AppCompatActivity() {
         val header = binding.navigationView.getHeaderView(0)
         header.findViewById<android.widget.TextView>(R.id.email_text).text = "안녕하세요 \n $email 님"
         header.findViewById<android.widget.ImageView>(R.id.profile_icon).setOnClickListener {
-            startActivity(Intent(this, MyPageActivity::class.java))
+            if (isGuest) {
+                Toast.makeText(this, "게스트 로그인 사용자는 마이페이지를 이용할 수 없습니다.", Toast.LENGTH_SHORT).show()
+            } else {
+                startActivity(Intent(this, MyPageActivity::class.java))
+            }
         }
+
     }
 
     private fun setupMap() {
@@ -236,68 +247,96 @@ class MainMapActivity : AppCompatActivity() {
         val userId = "$email&kakao"
         val menu = binding.navigationView.menu
         menu.clear()
+        groupItemIdMap.clear()
+        openedBookmarkGroups.clear()
+        bookmarkChildItemIds.clear()
 
         db.collection("users").document(userId).collection("bookmark").get()
             .addOnSuccessListener { documents ->
                 for (group in documents) {
                     val groupName = group.id
-                    val groupMenuItem = menu.add(groupName)
+                    val groupMenuItem = menu.add(0, uniqueMenuId++, 0, groupName).apply {
+                        intent = Intent().apply { action = groupName }  // ✅ 그룹에도 action 설정
+                    }
+                    groupItemIdMap[groupName] = groupMenuItem.itemId
                     groupMenuItem.setOnMenuItemClickListener {
-                        toggleBookmarkList(groupName, groupMenuItem)
+                        toggleBookmarkList(groupName)
                         true
                     }
                 }
             }
     }
 
-    private fun toggleBookmarkList(groupName: String, groupMenuItem: MenuItem) {
+
+    private fun toggleBookmarkList(groupName: String) {
         if (isGuest) return
 
         val email = getSharedPreferences("signIn", Context.MODE_PRIVATE).getString("email", null) ?: return
         val userId = "$email&kakao"
         val menu = binding.navigationView.menu
-        val existingItems = mutableListOf<MenuItem>()
 
-        for (i in 0 until menu.size()) {
-            val item = menu.getItem(i)
-            if (item.title.toString().startsWith("• ") && item.intent?.action == groupName) {
-                existingItems.add(item)
+        // 1. 이미 열려 있으면 닫기
+        if (openedBookmarkGroups.contains(groupName)) {
+            // 해당 그룹과 연결된 하위 메뉴 삭제
+            val childIds = bookmarkChildItemIds[groupName] ?: emptyList()
+            childIds.forEach { menu.removeItem(it) }
+
+            // 기존 그룹 메뉴도 제거
+            val groupItem = menu.findItem(groupItemIdMap[groupName] ?: -1)
+            if (groupItem != null) {
+                menu.removeItem(groupItem.itemId)
             }
-        }
 
-        if (existingItems.isNotEmpty()) {
-            existingItems.forEach { menu.removeItem(it.itemId) }
+            // 다시 그룹 버튼 추가 (닫힌 상태에서 다시 열 수 있도록)
+            val newGroupItem = menu.add(0, uniqueMenuId++, 0, groupName).apply {
+                intent = Intent().apply { action = groupName }
+            }
+            groupItemIdMap[groupName] = newGroupItem.itemId
+            newGroupItem.setOnMenuItemClickListener {
+                toggleBookmarkList(groupName)
+                true
+            }
+
+            openedBookmarkGroups.remove(groupName)
+            bookmarkChildItemIds.remove(groupName)
             return
         }
 
+        // 2. 새로 열기
         db.collection("users").document(userId).collection("bookmark")
             .document(groupName).get().addOnSuccessListener { document ->
+                val newChildIds = mutableListOf<Int>()
                 for (place in document.data?.keys.orEmpty()) {
                     val matjipData = document.get(place)
                     if (matjipData is Map<*, *>) {
                         val matjip = Matjip.fromMap(matjipData).copy(placeName = place)
-                        val item = menu.add("• ${matjip.placeName}")
+                        val item = menu.add(0, uniqueMenuId++, 0, "• ${matjip.placeName}")
                         item.intent = Intent().apply { action = groupName }
+                        newChildIds.add(item.itemId)
                         item.setOnMenuItemClickListener {
                             binding.drawerLayout.closeDrawer(GravityCompat.START)
-
                             val listener = object : DrawerLayout.DrawerListener {
                                 override fun onDrawerClosed(drawerView: View) {
                                     moveToPlace(matjip)
                                     binding.drawerLayout.removeDrawerListener(this)
                                 }
+
                                 override fun onDrawerSlide(drawerView: View, slideOffset: Float) {}
                                 override fun onDrawerOpened(drawerView: View) {}
                                 override fun onDrawerStateChanged(newState: Int) {}
                             }
-
                             binding.drawerLayout.addDrawerListener(listener)
                             true
                         }
                     }
                 }
+                bookmarkChildItemIds[groupName] = newChildIds
+                openedBookmarkGroups.add(groupName)
             }
     }
+
+
+
 
     override fun onResume() { super.onResume(); binding.mapView.resume() }
     override fun onPause() { super.onPause(); binding.mapView.pause() }

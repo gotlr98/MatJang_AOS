@@ -3,41 +3,58 @@
     android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="@color/purple_500"
-    android:padding="16dp">
+    android:background="#2C3E50"
+    android:padding="20dp">
 
-    <!-- 사용자 정보 영역 (수평) -->
+    <!-- 사용자 정보 (아이콘 + 이메일) -->
     <LinearLayout
-        android:orientation="horizontal"
-        android:layout_width="match_parent"
+    android:orientation="horizontal"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:gravity="center_vertical">
+
+    <ImageView
+        android:id="@+id/profile_icon"
+        android:layout_width="56dp"
+        android:layout_height="56dp"
+        android:layout_marginEnd="16dp"
+        android:src="@drawable/ic_person"
+        android:background="@drawable/circle_background"
+        android:padding="12dp" />
+
+    <TextView
+        android:id="@+id/email_text"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:gravity="center_vertical">
-
-        <ImageView
-            android:id="@+id/profile_icon"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:layout_marginEnd="12dp"
-            android:src="@drawable/ic_person"
-            android:background="@drawable/circle_background"
-            android:padding="8dp" />
-
-        <TextView
-            android:id="@+id/email_text"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="이메일"
-            android:textColor="@android:color/white"
-            android:textSize="16sp" />
+        android:text="안녕하세요\nuser@example.com 님"
+        android:textColor="@android:color/white"
+        android:textSize="16sp"
+        android:lineSpacingExtra="4dp" />
     </LinearLayout>
 
-    <!-- 북마크 버튼 -->
+        <!-- 구분선 -->
+    <View
+    android:layout_width="match_parent"
+    android:layout_height="1dp"
+    android:background="#4DFFFFFF"
+    android:layout_marginTop="16dp"
+    android:layout_marginBottom="12dp" />
 
-    <!-- 북마크 그룹 및 리스트가 동적으로 추가될 영역 -->
+        <!-- 북마크 섹션 제목 -->
+    <TextView
+    android:id="@+id/bookmark_section_title"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:text="⭐ 북마크 목록"
+    android:textColor="@android:color/white"
+    android:textSize="14sp"
+    android:textStyle="bold"
+    android:layout_marginBottom="8dp" />
+
+        <!-- 북마크 그룹 및 리스트가 동적으로 추가될 영역 -->
     <LinearLayout
-        android:id="@+id/bookmark_container"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:paddingTop="8dp" />
+    android:id="@+id/bookmark_container"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical" />
 </LinearLayout>
