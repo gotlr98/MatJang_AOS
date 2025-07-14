@@ -246,6 +246,7 @@ class MainMapActivity : AppCompatActivity() {
         val email = getSharedPreferences("signIn", Context.MODE_PRIVATE).getString("email", null) ?: return
         val userId = "$email&kakao"
         val menu = binding.navigationView.menu
+
         menu.clear()
         groupItemIdMap.clear()
         openedBookmarkGroups.clear()
@@ -256,7 +257,7 @@ class MainMapActivity : AppCompatActivity() {
                 for (group in documents) {
                     val groupName = group.id
                     val groupMenuItem = menu.add(0, uniqueMenuId++, 0, groupName).apply {
-                        intent = Intent().apply { action = groupName }  // ✅ 그룹에도 action 설정
+                        intent = Intent().apply { action = groupName }
                     }
                     groupItemIdMap[groupName] = groupMenuItem.itemId
                     groupMenuItem.setOnMenuItemClickListener {
@@ -264,9 +265,10 @@ class MainMapActivity : AppCompatActivity() {
                         true
                     }
                 }
+                binding.navigationView.invalidate()
+
             }
     }
-
 
     private fun toggleBookmarkList(groupName: String) {
         if (isGuest) return
@@ -275,34 +277,22 @@ class MainMapActivity : AppCompatActivity() {
         val userId = "$email&kakao"
         val menu = binding.navigationView.menu
 
-        // 1. 이미 열려 있으면 닫기
-        if (openedBookmarkGroups.contains(groupName)) {
-            // 해당 그룹과 연결된 하위 메뉴 삭제
-            val childIds = bookmarkChildItemIds[groupName] ?: emptyList()
-            childIds.forEach { menu.removeItem(it) }
+        val childIds = bookmarkChildItemIds[groupName]
 
-            // 기존 그룹 메뉴도 제거
-            val groupItem = menu.findItem(groupItemIdMap[groupName] ?: -1)
-            if (groupItem != null) {
-                menu.removeItem(groupItem.itemId)
-            }
+        if (openedBookmarkGroups.contains(groupName) && childIds != null) {
+            Log.d("Bookmark", "Closing group $groupName with childIds: $childIds")
 
-            // 다시 그룹 버튼 추가 (닫힌 상태에서 다시 열 수 있도록)
-            val newGroupItem = menu.add(0, uniqueMenuId++, 0, groupName).apply {
-                intent = Intent().apply { action = groupName }
-            }
-            groupItemIdMap[groupName] = newGroupItem.itemId
-            newGroupItem.setOnMenuItemClickListener {
-                toggleBookmarkList(groupName)
-                true
-            }
-
+            // 메뉴 전체 다시 그리기
             openedBookmarkGroups.remove(groupName)
             bookmarkChildItemIds.remove(groupName)
+
+            // 전체 메뉴 다시 그리기 (닫힌 상태로)
+            loadBookmarks()
+
             return
         }
 
-        // 2. 새로 열기
+        // 펼치기 로직
         db.collection("users").document(userId).collection("bookmark")
             .document(groupName).get().addOnSuccessListener { document ->
                 val newChildIds = mutableListOf<Int>()
