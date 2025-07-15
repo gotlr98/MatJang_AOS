@@ -66,8 +66,12 @@ class PlaceDetailBottomSheetFragment(
 
         Log.d("BottomSheet", "isGuest = $isGuest / user = ${UserManager.currentUser}")
 
+        val rawCategory = place.category
+        val lastCategory = rawCategory.split(" > ").lastOrNull() ?: rawCategory
+
         binding.placeName.text = place.placeName
         binding.address.text = place.address
+        binding.categoryName.text = lastCategory
 
         // 북마크 버튼 게스트는 숨김
         if (!isGuest) {

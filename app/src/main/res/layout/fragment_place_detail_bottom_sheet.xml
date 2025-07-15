@@ -1,4 +1,3 @@
-<?xml version="1.0" encoding="utf-8"?>
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="vertical"
@@ -7,25 +6,47 @@
     android:layout_height="wrap_content"
     android:background="@drawable/bottom_sheet_background">
 
-    <TextView
-        android:id="@+id/place_name"
-        android:text="Place Name"
-        android:textSize="22sp"
-        android:textStyle="bold"
-        android:textColor="#212121"
-        android:layout_marginBottom="8dp"
+    <!-- [1] Title + CategoryName -->
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginTop="6dp"
+        android:layout_marginBottom="24dp"
+        android:gravity="center_vertical">
 
+        <TextView
+            android:id="@+id/place_name"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="2"
+            android:text="Place Name"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:textColor="#212121" />
+
+        <TextView
+            android:id="@+id/categoryName"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="카페"
+            android:textSize="14sp"
+            android:textStyle="normal"
+            android:textColor="#757575"
+            android:layout_marginStart="4dp"/>
+    </LinearLayout>
+
+    <!-- [2] Address -->
     <TextView
         android:id="@+id/address"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
         android:text="Address"
         android:textSize="16sp"
         android:textColor="#757575"
-        android:layout_marginBottom="16dp"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
+        android:layout_marginBottom="16dp" />
 
+    <!-- [3] Bookmark Button -->
     <ImageButton
         android:id="@+id/bookmark_button"
         android:layout_width="48dp"
