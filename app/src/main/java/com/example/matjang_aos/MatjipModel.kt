@@ -17,12 +17,11 @@ data class Matjip(
     companion object {
         fun fromMap(map: Map<*, *>): Matjip {
             return Matjip(
-                placeName = map["place_name"] as? String ?: "", // Kakao API 스타일
+                placeName = map["place_name"] as? String ?: "",
                 category = map["category_name"] as? String ?: "",
                 longitude = (map["x"] as? Number)?.toDouble() ?: 0.0,
                 latitude = (map["y"] as? Number)?.toDouble() ?: 0.0,
-                address = map["address"] as? String
-                    ?: map["address_name"] as? String // address가 없으면 address_name으로 대체
+                address = map["address_name"] as? String ?: map["address"] as? String
             )
         }
     }

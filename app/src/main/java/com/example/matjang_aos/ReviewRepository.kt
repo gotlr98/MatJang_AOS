@@ -1,39 +1,13 @@
 package com.example.matjang_aos
 
 import android.util.Log
+import com.google.firebase.firestore.FirebaseFirestore
 import com.example.matjang_aos.ReviewModel
-import com.google.firebase.Firebase
-import com.google.firebase.firestore.firestore
-import java.util.Date
 
-object ReviewUtil {
+object ReviewRepository {
 
-    private val db = Firebase.firestore
+    private val db = FirebaseFirestore.getInstance()
 
-    // ✅ 이미 작성한 리뷰인지 체크
-    fun checkIfUserReviewed(
-        userEmail: String,
-        userType: String,
-        placeName: String,
-        callback: (Boolean) -> Unit
-    ) {
-        val sanitizedPlaceName = placeName.replace("/", "_")
-        val docID = "$userEmail&$userType"
-
-        db.collection("review")
-            .document(sanitizedPlaceName)
-            .collection("userReviews")
-            .document(docID)
-            .get()
-            .addOnSuccessListener { document ->
-                callback(document.exists())
-            }
-            .addOnFailureListener {
-                callback(false)
-            }
-    }
-
-    // ✅ 정렬/필터 포함 리뷰 불러오기
     fun fetchSortedReviews(
         userEmail: String,
         sortBy: String = "latest", // "latest" or "rating"
@@ -50,7 +24,7 @@ object ReviewUtil {
                     try {
                         val data = doc.data ?: return@mapNotNull null
                         ReviewModel(
-                            address = data["address"] as? String ?: data["address_name"] as? String ?: "",
+                            address = data["address"] as? String ?: "",
                             comment = data["comment"] as? String ?: "",
                             placeName = data["placeName"] as? String ?: "",
                             rate = (data["rate"] as? Number)?.toDouble() ?: 0.0,
@@ -59,14 +33,16 @@ object ReviewUtil {
                             timestamp = (data["timestamp"] as? com.google.firebase.Timestamp)?.toDate()
                         )
                     } catch (e: Exception) {
-                        Log.e("ReviewUtil", "Error parsing review: ${e.message}")
+                        Log.e("ReviewRepository", "Error parsing review: ${e.message}")
                         null
                     }
                 }.let { list ->
-                    // 필터
+                    // 카테고리 필터
                     val filtered = if (!filterCategory.isNullOrEmpty()) {
                         list.filter { it.category == filterCategory }
-                    } else list
+                    } else {
+                        list
+                    }
 
                     // 정렬
                     when (sortBy) {
@@ -79,7 +55,7 @@ object ReviewUtil {
                 onComplete(reviews)
             }
             .addOnFailureListener { exception ->
-                Log.e("ReviewUtil", "Error fetching reviews: $exception")
+                Log.e("ReviewRepository", "Error fetching reviews: $exception")
                 onError(exception)
             }
     }
