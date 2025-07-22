@@ -66,8 +66,8 @@ object UserManager {
     }
 
 
-    fun init(context: Context, email: String, onComplete: (UserModel) -> Unit) {
-        val docId = "$email&kakao"
+    fun init(context: Context, email: String, type: Type, onComplete: (UserModel) -> Unit) {
+        val docId = "$email&$type"
 
         db.collection("users").document(docId).get()
             .addOnSuccessListener { doc ->
@@ -76,18 +76,18 @@ object UserManager {
                         completeLogin(context, it, onComplete)
                     }
                 } else {
-                    createNewUser(context, email, onComplete)
+                    createNewUser(context, email, type, onComplete)
                 }
             }
             .addOnFailureListener {
                 Log.e("UserManager", "유저 불러오기 실패: ${it.message}")
-                val fallbackUser = UserModel(email = email, type = Type.kakao, reviews = emptyList())
+                val fallbackUser = UserModel(email = email, type = type, reviews = emptyList())
                 completeLogin(context, fallbackUser, onComplete)
             }
     }
 
-    private fun createNewUser(context: Context, email: String, onComplete: (UserModel) -> Unit) {
-        val newUser = UserModel(email = email, type = Type.kakao, reviews = emptyList())
+    private fun createNewUser(context: Context, email: String, type: Type, onComplete: (UserModel) -> Unit) {
+        val newUser = UserModel(email = email, type = type, reviews = emptyList())
         val docId = "$email&kakao"
 
         db.collection("users").document(docId).set(newUser)

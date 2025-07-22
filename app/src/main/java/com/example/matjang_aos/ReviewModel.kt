@@ -5,11 +5,11 @@ import kotlinx.android.parcel.Parcelize
 import java.util.Date
 
 data class ReviewModel(
-    val address: String,
-    val comment: String,
-    val placeName: String,
-    val rate: Double,
-    val user_email: String,
-    val category: String,
-    val timestamp: Date?
+    val placeName: String = "",
+    val rate: Double = 0.0,
+    val comment: String = "",
+    val user_email: String = "",
+    val address: String = "",
+    val category: String = "",
+    val timestamp: Long = 0L
 )

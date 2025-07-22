@@ -61,7 +61,7 @@ class ReviewWriteActivity : AppCompatActivity() {
 
 
         val emailWithType = "${user.email}&${user.type}"
-        val timestamp = Date()
+        val timestamp = 0L
 
         val review = ReviewModel(
             placeName = place.placeName,
@@ -82,7 +82,7 @@ class ReviewWriteActivity : AppCompatActivity() {
 
         placeReviewRef.set(review)
             .addOnSuccessListener {
-                // ✅ 사용자 리뷰 서브컬렉션에 추가
+                // 사용자 리뷰 서브컬렉션에 추가
                 userRef.collection("reviews")
                     .document(place.placeName.replace("/", "_"))
                     .set(review)

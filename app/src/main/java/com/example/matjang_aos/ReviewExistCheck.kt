@@ -6,8 +6,8 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 
 class ReviewAdapter(
-    private val reviews: List<Review>,
-    private val onReportClick: (Review) -> Unit
+    private val reviews: List<ReviewModel>,
+    private val onReportClick: (ReviewModel) -> Unit
 ) : RecyclerView.Adapter<ReviewAdapter.ReviewViewHolder>() {
 
     inner class ReviewViewHolder(val view: ViewGroup) : RecyclerView.ViewHolder(view)

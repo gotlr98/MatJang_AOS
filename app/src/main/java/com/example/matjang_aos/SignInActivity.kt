@@ -44,7 +44,7 @@ class SignInActivity : AppCompatActivity() {
         val email = signInPrefs.getString("email", null)
 
         if (token != null && email != null) {
-            UserManager.init(this, email) {
+            UserManager.init(this, email, Type.kakao) {
                 goToMainMap()
             }
         }
@@ -106,7 +106,7 @@ class SignInActivity : AppCompatActivity() {
                 apply()
             }
 
-            UserManager.init(this, email) {
+            UserManager.init(this, email, Type.kakao) {
                 goToMainMap()
             }
         }

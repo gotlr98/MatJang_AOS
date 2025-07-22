@@ -13,7 +13,7 @@ data class UserModel(
 
     val email: String = "",
     val type: Type = Type.Guest,
-    val reviews: List<Review> = emptyList(),
+    val reviews: List<ReviewModel> = emptyList(),
     val follower: List<String> = listOf(),
     val following: List<String> = listOf()
 )

@@ -30,7 +30,7 @@ object ReviewRepository {
                             rate = (data["rate"] as? Number)?.toDouble() ?: 0.0,
                             user_email = data["user_email"] as? String ?: "",
                             category = data["category"] as? String ?: "",
-                            timestamp = (data["timestamp"] as? com.google.firebase.Timestamp)?.toDate()
+                            timestamp = (data["timestamp"] as? com.google.firebase.Timestamp)?.toDate()?.time ?: 0L
                         )
                     } catch (e: Exception) {
                         Log.e("ReviewRepository", "Error parsing review: ${e.message}")

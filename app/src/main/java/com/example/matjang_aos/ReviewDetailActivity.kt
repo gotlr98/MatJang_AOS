@@ -12,7 +12,7 @@ class ReviewDetailActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityReviewDetailBinding
     private lateinit var adapter: ReviewAdapter
-    private val reviewList = mutableListOf<Review>()
+    private val reviewList = mutableListOf<ReviewModel>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -47,7 +47,7 @@ class ReviewDetailActivity : AppCompatActivity() {
             .addOnSuccessListener { documents ->
                 reviewList.clear()
                 for (doc in documents) {
-                    val review = doc.toObject(Review::class.java)
+                    val review = doc.toObject(ReviewModel::class.java)
                     reviewList.add(review)
                 }
 
@@ -62,7 +62,7 @@ class ReviewDetailActivity : AppCompatActivity() {
             }
     }
 
-    private fun showReportDialog(review: Review) {
+    private fun showReportDialog(review: ReviewModel) {
         val dialog = android.app.AlertDialog.Builder(this)
         val input = android.widget.EditText(this).apply {
             hint = "신고 사유를 입력하세요"
@@ -82,7 +82,7 @@ class ReviewDetailActivity : AppCompatActivity() {
         dialog.show()
     }
 
-    private fun sendReportToFirestore(review: Review, reason: String) {
+    private fun sendReportToFirestore(review: ReviewModel, reason: String) {
         val db = Firebase.firestore
         val docPath = review.placeName.replace("/", "_")
         val reportData = mapOf(

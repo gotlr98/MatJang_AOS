@@ -86,7 +86,7 @@ class MyPageActivity : AppCompatActivity() {
             }
     }
 
-    private fun displayUserReviews(reviews: List<Review>?) {
+    private fun displayUserReviews(reviews: List<ReviewModel>?) {
         binding.reviewContainer.removeAllViews()
 
         if (reviews.isNullOrEmpty()) {
